@@ -6,15 +6,29 @@ namespace Modules\IdentityAccess\Enums;
 
 enum PermissionName: string
 {
-    case UsersView = 'users.view';
-    case UsersCreate = 'users.create';
-    case UsersUpdate = 'users.update';
-    case UsersDelete = 'users.delete';
-    case UsersRolesManage = 'users.roles.manage';
-    case UsersPasswordReset = 'users.password.reset';
-    case RolesView = 'roles.view';
-    case RolesManage = 'roles.manage';
-    case AuditView = 'audit.view';
+    case SettingsAccess = 'settings.access';
+    case SettingsUsersView = 'settings.users.view';
+    case SettingsUsersManage = 'settings.users.manage';
+    case SettingsRolesView = 'settings.roles.view';
+    case SettingsRolesManage = 'settings.roles.manage';
+    case SettingsAuditView = 'settings.audit.view';
+
+    case ElectionAccess = 'election.access';
+    case ElectionAssembliesManage = 'election.assemblies.manage';
+    case ElectionMembersView = 'election.members.view';
+    case ElectionMembersManage = 'election.members.manage';
+    case ElectionRegistrationView = 'election.registration.view';
+    case ElectionRegistrationManage = 'election.registration.manage';
+    case ElectionBallotView = 'election.ballot.view';
+    case ElectionBallotManage = 'election.ballot.manage';
+    case ElectionVotingCast = 'election.voting.cast';
+    case ElectionTokensManage = 'election.tokens.manage';
+    case ElectionResultsView = 'election.results.view';
+    case ElectionReportsExport = 'election.reports.export';
+    case ElectionSettingsManage = 'election.settings.manage';
+
+    case LoanAccess = 'loan.access';
+    case LoanManage = 'loan.manage';
 
     /** @return list<string> */
     public static function values(): array

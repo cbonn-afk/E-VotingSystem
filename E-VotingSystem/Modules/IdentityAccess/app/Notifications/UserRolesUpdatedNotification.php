@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\IdentityAccess\Notifications;
 
-use Modules\IdentityAccess\User;
+use Modules\IdentityAccess\Models\User;
 use Illuminate\Notifications\Notification;
 
 final class UserRolesUpdatedNotification extends Notification

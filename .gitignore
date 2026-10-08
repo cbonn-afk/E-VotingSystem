@@ -1,0 +1,18 @@
+.DS_Store
+partner-accounting-management
+.pnpm-store/
+.idea
+
+# Frontend ignores
+truant_frontend/node_modules
+truant_frontend/.next
+truant_frontend/.idea
+truant_frontend/.DS_Store
+
+# Backend ignores
+truant_backend/.idea
+truant_backend/.DS_Store
+
+
+# Local production build values (never commit)
+truant_frontend/.env.production.local

@@ -25,7 +25,7 @@ final class DeleteUser
         DB::transaction(function () use ($actor, $target): void {
             $before = AuditLogger::user($target);
 
-            $target->tokens()->delete();
+            $target->revokeAccess();
             $target->delete();
 
             AuditLogger::record($actor, AuditAction::UserDeleted, $target, before: $before);

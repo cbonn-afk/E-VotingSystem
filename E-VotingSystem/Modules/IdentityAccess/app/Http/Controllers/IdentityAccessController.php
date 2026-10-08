@@ -2,7 +2,7 @@
 
 namespace Modules\IdentityAccess\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use Modules\IdentityAccess\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class IdentityAccessController extends Controller

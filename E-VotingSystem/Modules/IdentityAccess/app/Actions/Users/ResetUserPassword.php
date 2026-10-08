@@ -35,7 +35,7 @@ final class ResetUserPassword
                 'require_password_change' => $data['require_password_change'] ?? true,
             ]);
 
-            $target->tokens()->delete();
+            $target->revokeAccess();
             $target->refresh()->load('roles:id,name');
 
             AuditLogger::record($actor, AuditAction::UserPasswordReset, $target, $before, AuditLogger::user($target));

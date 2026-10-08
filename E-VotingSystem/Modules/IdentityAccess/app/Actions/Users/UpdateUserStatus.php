@@ -35,7 +35,7 @@ final class UpdateUserStatus
             ]);
 
             if ($status === UserStatus::Inactive) {
-                $target->tokens()->delete(); // sign the user out everywhere
+                $target->revokeAccess();
             }
 
             $target->refresh()->load('roles:id,name');
