@@ -1,0 +1,7 @@
+{
+    "IdentityAccess": true,
+    "Election": true,
+    "Members": true,
+    "Loan": true,
+    "Inquiry": true
+}

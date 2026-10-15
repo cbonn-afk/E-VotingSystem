@@ -1,0 +1,11 @@
+{
+    "name": "Inquiry",
+    "alias": "inquiry",
+    "description": "Member balances, savings transactions, loan balances, Excel imports, inquiry station and announcements.",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Inquiry\\Providers\\InquiryServiceProvider"
+    ],
+    "files": []
+}

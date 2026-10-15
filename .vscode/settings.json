@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "Spatie"
-    ]
+    ],
+    "git.ignoreLimitWarning": true
 }
