@@ -1,16 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Loan\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class LoanDatabaseSeeder extends Seeder
+/**
+ * Needs IdentitySeeder (permissions), StaffUserSeeder and MembersDatabaseSeeder to have run first.
+ */
+final class LoanDatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            LoanRoleSeeder::class,
+            LoanSettingSeeder::class,
+            LoanProductSeeder::class,
+            LoanApplicationSeeder::class,
+        ]);
     }
 }

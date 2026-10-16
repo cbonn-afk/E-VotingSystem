@@ -3,5 +3,6 @@
     "Election": true,
     "Members": true,
     "Loan": true,
-    "Inquiry": true
+    "Inquiry": true,
+    "Documents": true
 }

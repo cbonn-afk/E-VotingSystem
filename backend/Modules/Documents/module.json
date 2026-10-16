@@ -1,0 +1,11 @@
+{
+    "name": "Documents",
+    "alias": "documents",
+    "description": "Global print/document settings shared by every printable (loan, election, accounting, payroll).",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Documents\\Providers\\DocumentsServiceProvider"
+    ],
+    "files": []
+}

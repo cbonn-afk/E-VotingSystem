@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Election\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class ElectionDatabaseSeeder extends Seeder
+/** Needs IdentitySeeder (permissions) and MembersDatabaseSeeder to have run first. */
+final class ElectionDatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            ElectionRoleSeeder::class,
+            TouristSpotPollSeeder::class,
+        ]);
     }
 }

@@ -1,16 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Inquiry\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class InquiryDatabaseSeeder extends Seeder
+/** Needs IdentitySeeder (permissions) and MembersDatabaseSeeder to have run first. */
+final class InquiryDatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            InquiryRoleSeeder::class,
+            InquiryStatementSeeder::class,
+            InquiryAnnouncementSeeder::class,
+        ]);
     }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentSettings } from "@/modules/documents/hooks/useDocumentSettings";
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -32,6 +33,7 @@ const kpiGrid = {
 } as const;
 
 export default function ResultsView() {
+  const documentSettings = useDocumentSettings();
   const [assemblyId, setAssemblyId] = useState("");
   const [exporting, setExporting] = useState(false);
   const assemblies = useAssemblies().data?.data ?? [];
@@ -48,7 +50,7 @@ export default function ResultsView() {
     setExporting(true);
 
     try {
-      await exportResultsPdf(results);
+      await exportResultsPdf(results, documentSettings);
     } catch (error) {
       toast.error(getElectionErrorMessage(error, "The PDF could not be created."));
     } finally {

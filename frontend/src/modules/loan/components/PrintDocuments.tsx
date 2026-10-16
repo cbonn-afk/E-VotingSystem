@@ -1,6 +1,5 @@
 "use client";
 
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
@@ -9,19 +8,17 @@ import Typography from "@mui/material/Typography";
 import type { LoanAccount, LoanAgreement, LoanApplication } from "../types";
 import { formatDate, formatDateTime, formatPeso, frequencyLabel, interestMethodLabel, releaseMethodLabel } from "../utils/applicationStatus";
 import ScheduleTable from "./ScheduleTable";
+import PrintDocumentFrame from "@/modules/documents/components/PrintDocumentFrame";
+import { useCurrentUser } from "@/modules/auth/hooks/useCurrentUser";
+import { useDocumentSettings } from "@/modules/documents/hooks/useDocumentSettings";
 
-/** Hides everything except the document when printing, and the Print button itself. */
+/**
+ * Kept for the existing print views. Print rules (hiding the page chrome,
+ * `.no-print`, paper size, margins, footer) now live in the shared
+ * PrintDocumentFrame and follow Settings > Documents.
+ */
 export function PrintStyles() {
-  return (
-    <style>{`
-      @media print {
-        body * { visibility: hidden !important; }
-        .print-area, .print-area * { visibility: visible !important; }
-        .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; box-shadow: none !important; }
-        .no-print { display: none !important; }
-      }
-    `}</style>
-  );
+  return null;
 }
 
 export function PrintButton({ label = "Print or save as PDF" }: { label?: string }) {
@@ -43,19 +40,8 @@ const Row = ({ label, value }: { label: string; value: string }) => (
   </Stack>
 );
 
-const SignatureLine = ({ label, note }: { label: string; note?: string }) => (
-  <Stack spacing={0.5} sx={{ flex: 1 }}>
-    <Box sx={{ borderBottom: 1, borderColor: "text.primary", height: 48 }} />
-    <Typography variant="caption">{label}</Typography>
-    {note && (
-      <Typography variant="caption" color="text.secondary">
-        {note}
-      </Typography>
-    )}
-  </Stack>
-);
-
 export function AgreementDocument({ application, agreement }: { application: LoanApplication; agreement: LoanAgreement }) {
+  const settings = useDocumentSettings();
   const fees = Number(agreement.processing_fee) + Number(agreement.service_fee);
   const accepted =
     agreement.signed_method === "portal"
@@ -65,16 +51,12 @@ export function AgreementDocument({ application, agreement }: { application: Loa
         : null;
 
   return (
-    <Box className="print-area" sx={{ bgcolor: "background.paper", p: 5, maxWidth: 820, mx: "auto" }}>
+    <PrintDocumentFrame
+      title="Loan Agreement"
+      subtitle={`${agreement.agreement_no} · Application ${application.reference_no} · ${formatDate(agreement.generated_at)}`}
+      signatures={[{ label: "Borrower", note: application.member?.name }, { label: "For the Cooperative" }]}
+    >
       <Stack spacing={3}>
-        <Stack alignItems="center" spacing={0.5}>
-          <Typography variant="h5" fontWeight="bold">
-            LOAN AGREEMENT
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {agreement.agreement_no} · Application {application.reference_no} · {formatDate(agreement.generated_at)}
-          </Typography>
-        </Stack>
 
         <Typography variant="body2">
           Between the Cooperative (the &quot;Lender&quot;) and <strong>{application.member?.name}</strong> (Member code {application.member?.member_code}), the
@@ -104,38 +86,33 @@ export function AgreementDocument({ application, agreement }: { application: Loa
         <ScheduleTable items={agreement.schedule} />
 
         <Divider />
-        <Typography variant="subtitle1">Terms and conditions</Typography>
+        <Typography variant="subtitle1">{settings.termsTitle}</Typography>
         <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
           {agreement.terms_text}
         </Typography>
 
         <Divider />
         {accepted && <Typography variant="body2">{accepted}</Typography>}
-        <Stack direction="row" spacing={6} sx={{ pt: 3 }}>
-          <SignatureLine label="Borrower" note={application.member?.name} />
-          <SignatureLine label="For the Cooperative" />
-        </Stack>
       </Stack>
-    </Box>
+    </PrintDocumentFrame>
   );
 }
 
 export function ReceiptDocument({ application, loan }: { application: LoanApplication; loan: LoanAccount }) {
   const release = loan.release;
+  const currentUser = useCurrentUser().data?.name;
 
   if (!release) return null;
 
+  const releasedBy = release.released_by_name || currentUser;
+
   return (
-    <Box className="print-area" sx={{ bgcolor: "background.paper", p: 5, maxWidth: 620, mx: "auto" }}>
+    <PrintDocumentFrame
+      title="Loan Release Receipt"
+      subtitle={`${release.receipt_no} · ${formatDateTime(release.released_at)}`}
+      signatures={[{ label: "Received by (Borrower)" }, { label: "Released by", note: releasedBy }]}
+    >
       <Stack spacing={3}>
-        <Stack alignItems="center" spacing={0.5}>
-          <Typography variant="h5" fontWeight="bold">
-            LOAN RELEASE RECEIPT
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {release.receipt_no} · {formatDateTime(release.released_at)}
-          </Typography>
-        </Stack>
 
         <Stack spacing={0.75}>
           <Row label="Member" value={`${application.member?.name} (${application.member?.member_code})`} />
@@ -145,15 +122,11 @@ export function ReceiptDocument({ application, loan }: { application: LoanApplic
           <Row label="Amount released" value={formatPeso(release.amount_released)} />
           <Row label="Method" value={`${releaseMethodLabel[release.method]}${release.reference_no ? ` · ${release.reference_no}` : ""}`} />
           <Row label="First payment due" value={formatDate(loan.first_due_date)} />
-          <Row label="Released by" value={release.released_by_name} />
+          <Row label="Released by" value={releasedBy ?? ""} />
           {release.remarks && <Row label="Remarks" value={release.remarks} />}
         </Stack>
 
-        <Stack direction="row" spacing={6} sx={{ pt: 4 }}>
-          <SignatureLine label="Received by (Borrower)" />
-          <SignatureLine label="Released by" note={release.released_by_name} />
-        </Stack>
       </Stack>
-    </Box>
+    </PrintDocumentFrame>
   );
 }

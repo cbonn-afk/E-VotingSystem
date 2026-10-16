@@ -55,6 +55,8 @@ enum AuditAction: string
     case LoanAgreementSigned = 'loan.agreement.signed';
     case LoanReleased = 'loan.released';
 
+    case DocumentSettingsUpdated = 'documents.settings.updated';
+
     case InquiryStatementsImported = 'inquiry.statements.imported';
     case InquiryStationLookup = 'inquiry.station.lookup';
     case InquiryAnnouncementCreated = 'inquiry.announcement.created';

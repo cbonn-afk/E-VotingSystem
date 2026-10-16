@@ -5,6 +5,7 @@ export const permissionNames = [
   "settings.roles.view",
   "settings.roles.manage",
   "settings.audit.view",
+  "settings.documents.manage",
   "members.view",
   "members.manage",
   "election.access",

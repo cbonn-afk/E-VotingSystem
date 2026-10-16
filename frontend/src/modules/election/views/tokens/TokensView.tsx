@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentSettings } from "@/modules/documents/hooks/useDocumentSettings";
 import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -35,6 +36,7 @@ import { exportTablePdf } from "../../utils/exportTablePdf";
 import { fetchAllPages } from "../../utils/fetchAllPages";
 
 export default function TokensView() {
+  const documentSettings = useDocumentSettings();
   const authorization = useAuthorization();
   const canExport = authorization.can("election.reports.export");
   const assembly = useCurrentAssembly().data?.data;
@@ -141,6 +143,7 @@ export default function TokensView() {
       );
 
       await exportTablePdf({
+        settings: documentSettings,
         filename: `token-distribution-${assembly?.year ?? ""}.pdf`,
         title: settings?.document_title || "Token Distribution List",
         subtitle: settings?.document_sub_title,

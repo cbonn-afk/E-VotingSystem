@@ -1,3 +1,12 @@
+import { defaultDocumentSettings } from "@/modules/documents/defaults";
+import type { DocumentSettings } from "@/modules/documents/types";
+import {
+  drawPdfFooter,
+  drawPdfHeader,
+  getPdfFormat,
+  getPdfTableStyles,
+} from "@/modules/documents/utils/pdfBranding";
+
 type Options = {
   filename: string;
   title: string;
@@ -5,6 +14,8 @@ type Options = {
   head: string[];
   body: Array<Array<string | number>>;
   landscape?: boolean;
+  /** Global document settings (Settings > Documents). Falls back to the defaults. */
+  settings?: DocumentSettings;
 };
 
 /** Needs: npm i jspdf jspdf-autotable. Loaded on demand. */
@@ -15,29 +26,27 @@ export const exportTablePdf = async ({
   head,
   body,
   landscape = false,
+  settings = defaultDocumentSettings,
 }: Options) => {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import("jspdf"),
     import("jspdf-autotable"),
   ]);
-  const doc = new jsPDF({ orientation: landscape ? "landscape" : "portrait" });
-  const width = doc.internal.pageSize.getWidth();
-
-  doc.setFontSize(14);
-  doc.text(title, width / 2, 14, { align: "center" });
-
-  if (subtitle) {
-    doc.setFontSize(10);
-    doc.text(subtitle, width / 2, 20, { align: "center" });
-  }
+  const doc = new jsPDF({
+    ...getPdfFormat(settings),
+    // The export decides landscape for wide tables; otherwise follow the global setting.
+    orientation: landscape ? "landscape" : settings.orientation,
+  });
+  const startY = drawPdfHeader(doc, settings, title, subtitle);
 
   autoTable(doc, {
-    startY: subtitle ? 26 : 20,
-    theme: "striped",
+    startY,
+    ...getPdfTableStyles(settings),
     head: [head],
     body,
     styles: { fontSize: 8 },
   });
 
+  drawPdfFooter(doc, settings);
   doc.save(filename);
 };

@@ -42,4 +42,12 @@ export const superAdminModules: SuperAdminModule[] = [
     href: "/users",
     any: ["settings.users.view", "settings.roles.view"],
   },
+  {
+    title: "Document Settings",
+    description: "One print layout, logo, and footer for every loan, election, and report document.",
+    icon: "bx-printer",
+    color: "secondary",
+    href: "/settings/documents",
+    permission: "settings.documents.manage",
+  },
 ];

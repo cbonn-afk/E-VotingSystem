@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentSettings } from "@/modules/documents/hooks/useDocumentSettings";
 import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -51,6 +52,7 @@ const YesNo = ({ yes, goodWhenYes }: { yes: boolean; goodWhenYes: boolean }) => 
 );
 
 export default function RegistrationView() {
+  const documentSettings = useDocumentSettings();
   const authorization = useAuthorization();
   const canManage = authorization.can("election.registration.manage");
   const canExport = authorization.can("election.reports.export");
@@ -204,6 +206,7 @@ export default function RegistrationView() {
       );
 
       await exportTablePdf({
+        settings: documentSettings,
         filename: `attendance-${assembly?.year ?? ""}.pdf`,
         title: `${settings?.document_title ?? ""} General Assembly Attendance Sheet`.trim(),
         subtitle: settings?.document_sub_title,
