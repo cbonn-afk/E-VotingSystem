@@ -68,6 +68,10 @@ export const routePolicies: readonly RoutePolicy[] = [
     permission: "inquiry.access",
   },
   {
+    matches: (pathname) => isPath(pathname, "/loan/approval-levels"),
+    permission: "loan.settings.manage",
+  },
+  {
     matches: (pathname) => isPath(pathname, "/loan/settings"),
     permission: "loan.settings.manage",
   },

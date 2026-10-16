@@ -1,14 +1,14 @@
 <p align="center">
-  <img src="truant_frontend/public/images/truant-logo.png" alt="Truant Works" width="560">
+  <img src="truant_frontend/public/images/aiur-logo.png" alt="AIUR Technologies" width="560">
 </p>
 
 <h1 align="center">Technologies Election System</h1>
 
 <p align="center">
-  An ERP platform developed by Aiur Technologies Corp. for Truant Works.
+  An ERP platform developed by Aiur Technologies Corp. for Cooperative.
 </p>
 
-## About Truant
+## About the System
 
 Truant Works is an apparel and production business. This system is being built
 to connect its ordering workflow with BOM costing, statements of account,
@@ -18,11 +18,11 @@ and controlled user access.
 The project is organized as a frontend and backend application:
 
 ```text
-truant_ordering_system/
-├── truant_frontend/    # Next.js user interface
-├── truant_backend/     # Laravel API and business logic
-├── docs/               # Shared project documentation and assets
-├── LICENSE             # Repository-wide MIT license
+E-Voting-System/
+├── frontend/    # Next.js user interface
+├── backend/     # Laravel API and business logic
+├── docs/        # Shared project documentation and assets
+├── LICENSE      # Repository-wide MIT license
 └── README.md
 ```
 
@@ -80,7 +80,7 @@ git push -uf origin main
 
 - [@talismantimpac](https://github.com/talismanjt)
 - Rember Maguinsay
-- `@cbonn`
+- `Chris Bonn Pacio`
 
 Contributions should follow the architecture, testing, security, and review
 practices documented in the relevant application folder.
@@ -88,7 +88,7 @@ practices documented in the relevant application folder.
 ## Developed By
 
 <p>
-  <img src="docs/assets/aiur-technologies-logo.png" alt="Aiur Technologies Corp." width="420">
+  <img src="docs/assets/aiur-logo.png" alt="Aiur Technologies Corp." width="420">
 </p>
 
 Aiur Technologies Corp. develops software systems and technology solutions for

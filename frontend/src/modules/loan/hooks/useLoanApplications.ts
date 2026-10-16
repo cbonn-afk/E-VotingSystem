@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { loanApplicationsApi, type ApplicationAction } from "../api/loanApplicationsApi";
-import type { ApplicationStatus, LoanApplication } from "../types";
+import type { ApplicationStatus, DecisionPayload, EvaluationPayload, LoanApplication, ReleasePayload } from "../types";
 
 const root = ["loan", "applications"] as const;
 
@@ -12,8 +12,8 @@ export const useLoanApplications = (params: { q?: string; status?: ApplicationSt
     placeholderData: keepPreviousData,
   });
 
-export const useLoanApplication = (id: number) =>
-  useQuery({ queryKey: [...root, id], queryFn: () => loanApplicationsApi.get(id) });
+export const useLoanApplication = (id: number, enabled = true) =>
+  useQuery({ queryKey: [...root, id], queryFn: () => loanApplicationsApi.get(id), enabled });
 
 export const useLoanApplicationActions = (id: number) => {
   const queryClient = useQueryClient();
@@ -29,6 +29,18 @@ export const useLoanApplicationActions = (id: number) => {
         loanApplicationsApi.transition(id, action, remarks),
       onSuccess: accept,
     }),
+    evaluate: useMutation({
+      mutationFn: (body: EvaluationPayload) => loanApplicationsApi.evaluate(id, body),
+      onSuccess: accept,
+    }),
+    decide: useMutation({
+      mutationFn: (body: DecisionPayload) => loanApplicationsApi.decide(id, body),
+      onSuccess: accept,
+    }),
+    previewAgreement: useMutation({ mutationFn: (date: string) => loanApplicationsApi.previewAgreement(id, date) }),
+    generateAgreement: useMutation({ mutationFn: (date: string) => loanApplicationsApi.generateAgreement(id, date), onSuccess: accept }),
+    recordPaper: useMutation({ mutationFn: (file: File) => loanApplicationsApi.recordPaperAgreement(id, file), onSuccess: accept }),
+    release: useMutation({ mutationFn: (body: ReleasePayload) => loanApplicationsApi.release(id, body), onSuccess: accept }),
     reviewDocument: useMutation({
       mutationFn: ({ documentId, status, remarks }: { documentId: number; status: "accepted" | "rejected"; remarks?: string }) =>
         loanApplicationsApi.reviewDocument(id, documentId, status, remarks),

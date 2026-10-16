@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Loan\Http\Controllers\LoanApplicationController;
+use Modules\Loan\Http\Controllers\LoanApprovalLevelController;
 use Modules\Loan\Http\Controllers\LoanProductController;
 use Modules\Loan\Http\Controllers\LoanSettingsController;
 use Modules\Loan\Http\Controllers\PortalApplicationController;
@@ -25,6 +26,16 @@ Route::middleware(['auth:sanctum', 'password.changed'])->prefix('loan')->group(f
     Route::get('applications/{application}/signature', [LoanApplicationController::class, 'signature'])->middleware('can:loan.applications.view');
     Route::post('applications/{application}/transition', [LoanApplicationController::class, 'transition'])->middleware('can:loan.applications.manage');
     Route::patch('applications/{application}/documents/{document}', [LoanApplicationController::class, 'reviewDocument'])->middleware('can:loan.applications.manage');
+    Route::post('applications/{application}/agreement/preview', [LoanApplicationController::class, 'previewAgreement'])->middleware('can:loan.applications.manage');
+    Route::post('applications/{application}/agreement', [LoanApplicationController::class, 'generateAgreement'])->middleware('can:loan.applications.manage');
+    Route::post('applications/{application}/agreement/paper', [LoanApplicationController::class, 'recordPaperAgreement'])->middleware('can:loan.applications.manage');
+    Route::get('applications/{application}/agreement/paper', [LoanApplicationController::class, 'paperAgreement'])->middleware('can:loan.applications.view');
+    Route::post('applications/{application}/release', [LoanApplicationController::class, 'release'])->middleware('can:loan.release');
+    Route::post('applications/{application}/evaluation', [LoanApplicationController::class, 'evaluate'])->middleware('can:loan.evaluate');
+    Route::post('applications/{application}/decision', [LoanApplicationController::class, 'decide'])->middleware('can:loan.approve');
+
+    Route::get('approval-levels', [LoanApprovalLevelController::class, 'show'])->middleware('can:loan.settings.manage');
+    Route::put('approval-levels', [LoanApprovalLevelController::class, 'update'])->middleware('can:loan.settings.manage');
 });
 
 // Member portal (member code only, no accounts)
@@ -47,5 +58,6 @@ Route::middleware('portal.network')->prefix('loan-portal')->group(function (): v
         Route::put('applications/{application}/guarantors', [PortalApplicationController::class, 'setGuarantors']);
         Route::post('applications/{application}/signature', [PortalApplicationController::class, 'saveSignature']);
         Route::post('applications/{application}/submit', [PortalApplicationController::class, 'submit']);
+        Route::post('applications/{application}/agreement/sign', [PortalApplicationController::class, 'signAgreement']);
     });
 });

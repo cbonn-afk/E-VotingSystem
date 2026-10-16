@@ -18,7 +18,13 @@ import { useAuthorization } from "@/modules/auth/hooks/useAuthorization";
 
 import type { ApplicationAction } from "../api/loanApplicationsApi";
 import ApplicationStatusChip from "../components/ApplicationStatusChip";
+import AgreementPanel from "../components/AgreementPanel";
 import ApplicationTimeline from "../components/ApplicationTimeline";
+import ApprovalPanel from "../components/ApprovalPanel";
+import EvaluationForm from "../components/EvaluationForm";
+import EvaluationSummary from "../components/EvaluationSummary";
+import LoanAccountPanel from "../components/LoanAccountPanel";
+import ReleasePanel from "../components/ReleasePanel";
 import FilePreviewDialog, { type PreviewTarget } from "../components/FilePreviewDialog";
 import RemarksDialog from "../components/RemarksDialog";
 import { useLoanApplication, useLoanApplicationActions } from "../hooks/useLoanApplications";
@@ -32,7 +38,13 @@ const docLabel = { pending: "Not reviewed yet", accepted: "Accepted", rejected: 
 const errorText = (error: unknown): string => {
   if (!(error instanceof ApiError)) return "Something went wrong. Try again.";
 
-  return error.errors.action?.[0] ?? error.errors.remarks?.[0] ?? error.errors.status?.[0] ?? error.message;
+  return (
+    error.errors.action?.[0] ??
+    error.errors.remarks?.[0] ??
+    error.errors.status?.[0] ??
+    error.errors.decision?.[0] ??
+    error.message
+  );
 };
 
 export default function LoanApplicationDetailView({ applicationId }: { applicationId: number }) {
@@ -116,7 +128,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
                 Reject application
               </Button>
             )}
-            {!["submitted", "document_review"].includes(application.status) && (
+            {!["submitted", "document_review", "for_evaluation", "for_approval", "approved", "for_agreement", "for_release"].includes(application.status) && (
               <Typography variant="body2" color="text.secondary">
                 No review action is available for this status.
               </Typography>
@@ -124,6 +136,30 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
           </Stack>
         </Paper>
       )}
+
+      {application.can_evaluate && (
+        <EvaluationForm
+          application={application}
+          pending={actions.evaluate.isPending}
+          onSubmit={(payload, onError) =>
+            actions.evaluate.mutate(payload, { onSuccess: () => toast.success("Evaluation submitted."), onError })
+          }
+        />
+      )}
+
+      {application.evaluation && <EvaluationSummary evaluation={application.evaluation} />}
+
+      <ApprovalPanel
+        application={application}
+        pending={actions.decide.isPending}
+        onDecide={(payload, onError) =>
+          actions.decide.mutate(payload, { onSuccess: () => toast.success("Decision saved."), onError })
+        }
+      />
+
+      <AgreementPanel application={application} />
+      <ReleasePanel application={application} />
+      {application.loan && <LoanAccountPanel loan={application.loan} receiptHref={`/loan/applications/${application.id}/receipt`} />}
 
       <Paper className="p-6">
         <Stack spacing={1}>

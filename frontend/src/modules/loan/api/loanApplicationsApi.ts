@@ -1,6 +1,14 @@
 import { apiClient } from "@/libs/api/apiClient";
 
-import type { ApplicationStatus, LoanApplication, Paginated } from "../types";
+import type {
+  AgreementPreview,
+  ApplicationStatus,
+  DecisionPayload,
+  EvaluationPayload,
+  LoanApplication,
+  Paginated,
+  ReleasePayload,
+} from "../types";
 
 export type ApplicationAction = "start_review" | "return" | "accept_documents" | "reject";
 
@@ -23,6 +31,29 @@ export const loanApplicationsApi = {
       method: "POST",
       body: { action, remarks: remarks ?? null },
     }),
+
+  evaluate: (id: number, body: EvaluationPayload) =>
+    apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/evaluation`, { method: "POST", body }),
+
+  decide: (id: number, body: DecisionPayload) =>
+    apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/decision`, { method: "POST", body }),
+
+  previewAgreement: (id: number, first_due_date: string) =>
+    apiClient<{ data: AgreementPreview }>(`/api/loan/applications/${id}/agreement/preview`, { method: "POST", body: { first_due_date } }),
+
+  generateAgreement: (id: number, first_due_date: string) =>
+    apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/agreement`, { method: "POST", body: { first_due_date } }),
+
+  recordPaperAgreement: (id: number, file: File) => {
+    const body = new FormData();
+
+    body.append("file", file);
+
+    return apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/agreement/paper`, { method: "POST", body });
+  },
+
+  release: (id: number, body: ReleasePayload) =>
+    apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/release`, { method: "POST", body }),
 
   reviewDocument: (id: number, documentId: number, status: "accepted" | "rejected", remarks?: string) =>
     apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/documents/${documentId}`, {

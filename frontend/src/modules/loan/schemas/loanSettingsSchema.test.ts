@@ -22,6 +22,11 @@ describe("loan settings schema", () => {
     networksText: "192.168.1.0/24",
     session_idle_minutes: "20",
     signature_required: false,
+    diminishing_method: "equal_installment" as const,
+    fee_handling: "deduct_from_proceeds" as const,
+    payment_allocation: "penalty_interest_principal" as const,
+    penalty_basis: "installment" as const,
+    agreement_terms: "1. The Borrower promises to repay.",
   };
 
   it("accepts valid settings", () => {
@@ -31,6 +36,11 @@ describe("loan settings schema", () => {
   it("rejects an idle timeout outside 5 to 120 minutes", () => {
     expect(loanSettingsSchema.safeParse({ ...valid, session_idle_minutes: "3" }).success).toBe(false);
     expect(loanSettingsSchema.safeParse({ ...valid, session_idle_minutes: "500" }).success).toBe(false);
+  });
+
+  it("rejects an unknown money rule and empty agreement terms", () => {
+    expect(loanSettingsSchema.safeParse({ ...valid, fee_handling: "whatever" }).success).toBe(false);
+    expect(loanSettingsSchema.safeParse({ ...valid, agreement_terms: "  " }).success).toBe(false);
   });
 
   it("rejects a bad network entry", () => {

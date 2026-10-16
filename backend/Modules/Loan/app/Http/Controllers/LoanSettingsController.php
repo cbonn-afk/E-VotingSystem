@@ -31,9 +31,16 @@ class LoanSettingsController extends Controller
             }],
             'session_idle_minutes' => ['required', 'integer', 'min:5', 'max:120'],
             'signature_required' => ['required', 'boolean'],
+            'diminishing_method' => ['required', Rule::in(LoanSetting::DIMINISHING_METHODS)],
+            'fee_handling' => ['required', Rule::in(LoanSetting::FEE_HANDLING)],
+            'payment_allocation' => ['required', Rule::in(LoanSetting::PAYMENT_ALLOCATIONS)],
+            'penalty_basis' => ['required', Rule::in(LoanSetting::PENALTY_BASES)],
+            'agreement_terms' => ['nullable', 'string', 'max:8000'],
         ]);
 
         $data['allowed_networks'] = array_values(array_unique(array_map('trim', $data['allowed_networks'])));
+        // Saving the default text unchanged keeps following the default.
+        $data['agreement_terms'] = ($data['agreement_terms'] ?? null) === LoanSetting::DEFAULT_TERMS ? null : ($data['agreement_terms'] ?? null);
 
         $settings = LoanSetting::current();
         $before = $this->payload($settings);
@@ -52,6 +59,12 @@ class LoanSettingsController extends Controller
             'allowed_networks' => $s->allowed_networks ?? [],
             'session_idle_minutes' => $s->session_idle_minutes,
             'signature_required' => $s->signature_required,
+            'diminishing_method' => $s->diminishing_method,
+            'fee_handling' => $s->fee_handling,
+            'payment_allocation' => $s->payment_allocation,
+            'penalty_basis' => $s->penalty_basis,
+            // The text in force: the saved one, or the built-in default when none was saved.
+            'agreement_terms' => $s->termsText(),
         ];
     }
 

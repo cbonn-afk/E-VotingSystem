@@ -38,6 +38,12 @@ export const loanNavigation: ModuleNavigationGroup[] = [
     label: "Setup",
     items: [
       {
+        label: "Approval Levels",
+        href: "/loan/approval-levels",
+        icon: "bx-git-merge",
+        permission: "loan.settings.manage",
+      },
+      {
         label: "Settings",
         href: "/loan/settings",
         icon: "bx-cog",

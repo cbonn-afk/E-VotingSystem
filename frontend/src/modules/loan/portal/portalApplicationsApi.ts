@@ -48,6 +48,13 @@ export const portalApplicationsApi = {
       headers,
     }),
 
+  signAgreement: (id: number, signature: string | null) =>
+    apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/agreement/sign`, {
+      method: "POST",
+      body: { agreed: true, signature },
+      headers,
+    }),
+
   submit: (id: number) =>
     apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/submit`, {
       method: "POST",

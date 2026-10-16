@@ -26,6 +26,11 @@ export const loanSettingsSchema = z
     networksText: z.string(),
     session_idle_minutes: z.string().regex(/^\d+$/, "Enter a whole number of minutes."),
     signature_required: z.boolean(),
+    diminishing_method: z.enum(["equal_installment", "fixed_principal"]),
+    fee_handling: z.enum(["deduct_from_proceeds", "collect_separately"]),
+    payment_allocation: z.enum(["penalty_interest_principal", "interest_penalty_principal"]),
+    penalty_basis: z.enum(["installment", "principal_balance"]),
+    agreement_terms: z.string().trim().min(1, "The agreement needs terms and conditions.").max(8000, "Keep the terms under 8,000 characters."),
   })
   .superRefine((values, context) => {
     const minutes = Number(values.session_idle_minutes);
@@ -56,6 +61,11 @@ export const toFormValues = (settings: LoanSettings): LoanSettingsFormValues => 
   networksText: settings.allowed_networks.join("\n"),
   session_idle_minutes: String(settings.session_idle_minutes),
   signature_required: settings.signature_required,
+  diminishing_method: settings.diminishing_method,
+  fee_handling: settings.fee_handling,
+  payment_allocation: settings.payment_allocation,
+  penalty_basis: settings.penalty_basis,
+  agreement_terms: settings.agreement_terms,
 });
 
 export const toRequest = (values: LoanSettingsFormValues): LoanSettings => ({
@@ -63,4 +73,9 @@ export const toRequest = (values: LoanSettingsFormValues): LoanSettings => ({
   allowed_networks: parseNetworks(values.networksText),
   session_idle_minutes: Number(values.session_idle_minutes),
   signature_required: values.signature_required,
+  diminishing_method: values.diminishing_method,
+  fee_handling: values.fee_handling,
+  payment_allocation: values.payment_allocation,
+  penalty_basis: values.penalty_basis,
+  agreement_terms: values.agreement_terms.trim(),
 });

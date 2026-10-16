@@ -42,6 +42,13 @@ export default function LoanOverviewView() {
       visible: authorization.can("loan.products.manage"),
     },
     {
+      title: "Approval levels",
+      description: "Choose who approves loans and from which amount each level is required.",
+      icon: "bx-git-merge",
+      href: "/loan/approval-levels",
+      visible: canSeeSettings,
+    },
+    {
       title: "Settings",
       description: "Choose who can reach the member portal and set the sign-out time.",
       icon: "bx-cog",

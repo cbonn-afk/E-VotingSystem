@@ -6,7 +6,7 @@ namespace Modules\Loan\Support;
 
 /**
  * Application stages. Later stages (evaluation, approval, release) are added when those screens are built;
- * this release covers submission and document review.
+ * this release covers submission through release. Payments, penalties and closure come later.
  */
 final class ApplicationStatus
 {
@@ -15,12 +15,17 @@ final class ApplicationStatus
     public const DOCUMENT_REVIEW = 'document_review';
     public const RETURNED = 'returned';
     public const FOR_EVALUATION = 'for_evaluation';
+    public const FOR_APPROVAL = 'for_approval';
+    public const APPROVED = 'approved';
+    public const FOR_AGREEMENT = 'for_agreement';
+    public const FOR_RELEASE = 'for_release';
+    public const RELEASED = 'released';
     public const REJECTED = 'rejected';
     public const CANCELLED = 'cancelled';
 
     public const ALL = [
         self::DRAFT, self::SUBMITTED, self::DOCUMENT_REVIEW, self::RETURNED,
-        self::FOR_EVALUATION, self::REJECTED, self::CANCELLED,
+        self::FOR_EVALUATION, self::FOR_APPROVAL, self::APPROVED, self::FOR_AGREEMENT, self::FOR_RELEASE, self::RELEASED, self::REJECTED, self::CANCELLED,
     ];
 
     public const MEMBER_EDITABLE = [self::DRAFT, self::RETURNED];

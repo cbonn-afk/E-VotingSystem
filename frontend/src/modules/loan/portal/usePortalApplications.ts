@@ -10,8 +10,8 @@ export const usePortalProducts = () =>
 
 export const usePortalApplicationList = () => useQuery({ queryKey: root, queryFn: api.list, retry: false });
 
-export const usePortalApplication = (id: number) =>
-  useQuery({ queryKey: [...root, id], queryFn: () => api.get(id), retry: false });
+export const usePortalApplication = (id: number, enabled = true) =>
+  useQuery({ queryKey: [...root, id], queryFn: () => api.get(id), retry: false, enabled });
 
 /** Every change returns the whole application, so the cache is refreshed in one place. */
 export const usePortalApplicationActions = (id?: number) => {
@@ -37,6 +37,7 @@ export const usePortalApplicationActions = (id?: number) => {
     removeDocument: useMutation({ mutationFn: (documentId: number) => api.deleteDocument(id as number, documentId), onSuccess: accept }),
     guarantors: useMutation({ mutationFn: (codes: string[]) => api.setGuarantors(id as number, codes), onSuccess: accept }),
     signature: useMutation({ mutationFn: (dataUrl: string) => api.saveSignature(id as number, dataUrl), onSuccess: accept }),
+    acceptAgreement: useMutation({ mutationFn: (signature: string | null) => api.signAgreement(id as number, signature), onSuccess: accept }),
     submit: useMutation({ mutationFn: () => api.submit(id as number), onSuccess: accept }),
     cancel: useMutation({
       mutationFn: () => api.cancel(id as number),

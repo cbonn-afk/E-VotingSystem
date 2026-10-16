@@ -21,6 +21,8 @@ import { ApiError } from "@/libs/api/apiError";
 
 import ApplicationDetailsForm from "../components/ApplicationDetailsForm";
 import ApplicationStatusChip from "../components/ApplicationStatusChip";
+import LoanAccountPanel from "../components/LoanAccountPanel";
+import MemberAgreementPanel from "../components/MemberAgreementPanel";
 import ApplicationTimeline from "../components/ApplicationTimeline";
 import MemberApplicationDocuments from "../components/MemberApplicationDocuments";
 import SignaturePad from "../components/SignaturePad";
@@ -112,6 +114,21 @@ export default function PortalApplicationView({ applicationId }: { applicationId
         {application.status === "submitted" && <Alert severity="info">Submitted. The cooperative will review your documents next.</Alert>}
         {application.status === "document_review" && <Alert severity="info">The cooperative is checking your documents.</Alert>}
         {application.status === "for_evaluation" && <Alert severity="success">Your documents were accepted. The application is waiting for evaluation.</Alert>}
+        {application.status === "for_approval" && <Alert severity="info">Your application was evaluated and is now with the approvers.</Alert>}
+        {application.status === "for_agreement" && <Alert severity="warning">Your loan is approved. Please read and accept the loan agreement below.</Alert>}
+        {application.status === "for_release" && <Alert severity="info">Thank you. The cooperative will release your loan soon.</Alert>}
+        {application.status === "released" && <Alert severity="success">Your loan was released. Your repayment schedule is below.</Alert>}
+        {application.status === "approved" && (
+          <Alert severity="success">
+            Your loan was approved
+            {application.approved_amount ? ` for ${formatPeso(application.approved_amount)}` : ""}. The cooperative will contact you about the next steps.
+          </Alert>
+        )}
+
+        {application.agreement && ["for_agreement", "for_release", "released"].includes(application.status) && (
+          <MemberAgreementPanel application={application} />
+        )}
+        {application.loan && <LoanAccountPanel loan={application.loan} />}
 
         <Paper className="p-6">
           <Stack spacing={3}>

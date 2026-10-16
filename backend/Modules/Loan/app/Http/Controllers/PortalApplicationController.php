@@ -19,6 +19,7 @@ use Modules\Loan\Http\Resources\LoanApplicationResource;
 use Modules\Loan\Http\Resources\LoanProductResource;
 use Modules\Loan\Models\LoanApplication;
 use Modules\Loan\Models\LoanProduct;
+use Modules\Loan\Support\AgreementService;
 use Modules\Loan\Support\ApplicationStatus;
 use Modules\Loan\Support\ApplicationWorkflow;
 use Modules\Members\Models\Member;
@@ -30,7 +31,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class PortalApplicationController extends Controller
 {
-    private const RELATIONS = ['member', 'product.documents', 'documents', 'guarantors.member', 'events'];
+    private const RELATIONS = ['member', 'product.documents', 'documents', 'guarantors.member', 'events', 'agreement', 'loan.scheduleItems', 'loan.release'];
 
     public function __construct(private readonly ApplicationWorkflow $workflow) {}
 
@@ -217,6 +218,20 @@ class PortalApplicationController extends Controller
         $model->update(['signature_path' => $path, 'signed_at' => now()]);
 
         return new LoanApplicationResource($model->load(self::RELATIONS));
+    }
+
+    /** The member accepts the agreement. A drawn signature is required only when Loan settings say so. */
+    public function signAgreement(Request $request, int $application, AgreementService $agreements): LoanApplicationResource
+    {
+        $model = $this->own($request, $application);
+        $data = $request->validate([
+            'agreed' => ['accepted'],
+            'signature' => ['nullable', 'string', 'max:400000'],
+        ], ['agreed.accepted' => 'Confirm that you accept the agreement.']);
+
+        $agreements->signByMember($model, $data['signature'] ?? null);
+
+        return new LoanApplicationResource($model->refresh()->load(self::RELATIONS));
     }
 
     public function submit(Request $request, int $application): LoanApplicationResource

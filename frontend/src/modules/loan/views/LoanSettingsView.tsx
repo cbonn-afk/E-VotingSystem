@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -32,6 +33,11 @@ const defaults: LoanSettingsFormValues = {
   networksText: "",
   session_idle_minutes: "20",
   signature_required: false,
+  diminishing_method: "equal_installment",
+  fee_handling: "deduct_from_proceeds",
+  payment_allocation: "penalty_interest_principal",
+  penalty_basis: "installment",
+  agreement_terms: "",
 };
 
 export default function LoanSettingsView() {
@@ -155,6 +161,57 @@ export default function LoanSettingsView() {
               <FormControlLabel
                 label="Require an e-signature on loan applications"
                 control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+              />
+            )}
+          />
+
+          <Typography variant="h6" sx={{ pt: 2 }}>
+            Loan money rules
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: -3 }}>
+            These start with the most common practice. Changing them affects new agreements; loans already released keep the
+            schedule they were signed with.
+          </Typography>
+
+          {(
+            [
+              ["diminishing_method", "Diminishing-balance payments", [["equal_installment", "Equal installment every period"], ["fixed_principal", "Fixed principal, interest shrinks each period"]], undefined],
+              ["fee_handling", "Processing and service fees", [["deduct_from_proceeds", "Deducted from the money released"], ["collect_separately", "Collected from the member separately"]], undefined],
+              ["payment_allocation", "When a payment is received, apply it to", [["penalty_interest_principal", "Penalty, then interest, then principal"], ["interest_penalty_principal", "Interest, then penalty, then principal"]], "Used when payments are recorded (next release)."],
+              ["penalty_basis", "A late penalty is a percent of", [["installment", "The overdue installment"], ["principal_balance", "The remaining principal"]], "Used when penalties are calculated (next release)."],
+            ] as const
+          ).map(([name, label, options, helper]) => (
+            <Controller
+              key={name}
+              name={name}
+              control={control}
+              render={({ field }) => (
+                <CustomTextField {...field} select fullWidth label={label} helperText={helper}>
+                  {options.map(([value, text]) => (
+                    <MenuItem key={value} value={value}>
+                      {text}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+          ))}
+          <Typography variant="caption" color="text.secondary" sx={{ mt: -3 }}>
+            Flat-rate products always charge interest on the original amount for the whole term, split evenly.
+          </Typography>
+
+          <Controller
+            name="agreement_terms"
+            control={control}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                multiline
+                minRows={8}
+                fullWidth
+                label="Agreement terms and conditions"
+                error={Boolean(errors.agreement_terms)}
+                helperText={errors.agreement_terms?.message ?? "Printed on every loan agreement. The starting text is generic: have the cooperative's counsel review it."}
               />
             )}
           />
