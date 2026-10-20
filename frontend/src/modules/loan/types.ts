@@ -19,6 +19,8 @@ export type LoanSettings = {
   penalty_rate_source: PenaltyRateSource;
   default_penalty_rate_percent: string;
   penalty_calculation: PenaltyCalculation;
+  delinquent_after_days: number;
+  default_after_days: number;
   agreement_terms: string;
 };
 
@@ -294,8 +296,14 @@ export type LoanPaymentRecord = {
   void_reason?: string | null;
 };
 
+export type CollectionStatus = "current" | "due" | "overdue" | "delinquent" | "default" | "paid";
+export type AgingBucket = "1-30" | "31-60" | "61-90" | "91+";
+
 export type LoanSummary = {
   as_of: string;
+  collection_status: CollectionStatus;
+  days_past_due: number;
+  overdue_amount: string;
   due_now: string;
   penalty_owed: string;
   payoff: string;
@@ -336,4 +344,29 @@ export type RecordPaymentPayload = {
   method: PaymentMethod;
   reference_no: string | null;
   remarks: string | null;
+};
+
+/** One late loan in the follow-up list. */
+export type CollectionRow = {
+  id: number;
+  loan_no: string | null;
+  collection_status: CollectionStatus;
+  days_past_due: number;
+  bucket: AgingBucket | null;
+  overdue_amount: string;
+  oldest_due_date: string | null;
+  outstanding_balance: string;
+  last_payment_on: string | null;
+  member?: { id: number; member_code: string; name: string; mobile_number: string | null };
+  product?: { id: number; name: string };
+};
+
+export type CollectionBucketTotals = { loans: number; balance: string; overdue: string };
+
+export type CollectionSummary = {
+  active_loans: number;
+  outstanding_balance: string;
+  statuses: Record<"current" | "due" | "overdue" | "delinquent" | "default", CollectionBucketTotals>;
+  buckets: Record<AgingBucket, CollectionBucketTotals>;
+  portfolio_at_risk_percent: number;
 };

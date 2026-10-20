@@ -8,7 +8,6 @@ import Typography from "@mui/material/Typography";
 
 import { DataGrid } from "@mui/x-data-grid";
 import type {
-  GridCallbackDetails,
   GridColDef,
   GridRowId,
   GridRowIdGetter,
@@ -278,7 +277,7 @@ function CustomTable<T extends GridValidRowModel>({
 
   const handleSortModelChange = (
     model: GridSortModel,
-    details: GridCallbackDetails,
+    details: Parameters<NonNullable<DataGridProps<T>["onSortModelChange"]>>[1],
   ) => {
     if (!onSortModelChange) return;
 
@@ -295,12 +294,15 @@ function CustomTable<T extends GridValidRowModel>({
 
     (onSortModelChange as NonNullable<DataGridProps<T>["onSortModelChange"]>)(
       model,
+      details,
     );
   };
 
   const handleRowSelectionModelChange = (
     model: GridRowSelectionModel,
-    details: GridCallbackDetails,
+    details: Parameters<
+      NonNullable<DataGridProps<T>["onRowSelectionModelChange"]>
+    >[1],
   ) => {
     const ids = "ids" in model ? Array.from(model.ids).map(String) : [];
 

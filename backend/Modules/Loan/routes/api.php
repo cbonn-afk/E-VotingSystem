@@ -9,6 +9,7 @@ use Modules\Loan\Http\Controllers\LoanSettingsController;
 use Modules\Loan\Http\Controllers\PortalApplicationController;
 use Modules\Loan\Http\Controllers\PortalAuthController;
 use Modules\Loan\Http\Controllers\PortalLoanController;
+use Modules\Loan\Http\Controllers\CollectionController;
 
 // Loaded by the module RouteServiceProvider with prefix "api".
 
@@ -32,6 +33,8 @@ Route::middleware(['auth:sanctum', 'password.changed'])->prefix('loan')->group(f
     Route::post('applications/{application}/evaluation', [LoanApplicationController::class, 'evaluate'])->middleware('can:loan.evaluate');
     Route::post('applications/{application}/decision', [LoanApplicationController::class, 'decide'])->middleware('can:loan.approve');
 
+    Route::get('collections', [CollectionController::class, 'index'])->middleware('can:loan.payments.view');
+    Route::get('collections/summary', [CollectionController::class, 'summary'])->middleware('can:loan.payments.view');
     Route::get('loans', [LoanAccountController::class, 'index'])->middleware('can:loan.payments.view');
     Route::get('loans/{loan}', [LoanAccountController::class, 'show'])->middleware('can:loan.payments.view');
     Route::post('loans/{loan}/payments', [LoanAccountController::class, 'recordPayment'])->middleware('can:loan.payments.record');
@@ -58,13 +61,9 @@ Route::middleware('portal.network')->prefix('loan-portal')->group(function (): v
             Route::get('applications/{application}', [PortalApplicationController::class, 'show']);
             Route::patch('applications/{application}', [PortalApplicationController::class, 'update']);
             Route::delete('applications/{application}', [PortalApplicationController::class, 'destroy']);
-            Route::post('applications/{application}/documents', [PortalApplicationController::class, 'uploadDocument']);
-            Route::delete('applications/{application}/documents/{document}', [PortalApplicationController::class, 'deleteDocument']);
-            Route::get('applications/{application}/documents/{document}/download', [PortalApplicationController::class, 'downloadDocument']);
             Route::put('applications/{application}/guarantors', [PortalApplicationController::class, 'setGuarantors']);
             Route::post('applications/{application}/signature', [PortalApplicationController::class, 'saveSignature']);
             Route::post('applications/{application}/submit', [PortalApplicationController::class, 'submit']);
-            Route::post('applications/{application}/agreement/sign', [PortalApplicationController::class, 'signAgreement']);
         });
     });
 });

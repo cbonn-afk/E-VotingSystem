@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Alert from "@mui/material/Alert";
 import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import Box from "@mui/material/Box";
@@ -17,6 +16,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import CollectionStatusChip from "../components/CollectionStatusChip";
 import ApplicationStatusChip from "../components/ApplicationStatusChip";
 import { formatDate, formatPeso } from "../utils/applicationStatus";
 import { portalApi, portalMemberKey } from "./portalApi";
@@ -103,12 +103,7 @@ export default function PortalDashboardView() {
                           {loan.summary.next_due ? ` · next ${formatPeso(loan.summary.next_due.amount)} on ${formatDate(loan.summary.next_due.due_date)}` : ""}
                         </Typography>
                       </Stack>
-                      <Chip
-                        size="small"
-                        variant="tonal"
-                        color={loan.status === "fully_paid" ? "success" : loan.summary.overdue_count > 0 ? "error" : "info"}
-                        label={loan.status === "fully_paid" ? "Fully paid" : loan.summary.overdue_count > 0 ? "Overdue" : "Active"}
-                      />
+                      <CollectionStatusChip status={loan.summary.collection_status} forMember />
                     </Stack>
                   </CardContent>
                 </CardActionArea>

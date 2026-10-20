@@ -36,6 +36,8 @@ export const loanSettingsSchema = z
       .regex(/^\d{1,3}(\.\d{1,3})?$/, "Enter a percentage like 2 or 1.5.")
       .refine((value) => Number(value) <= 100, "A penalty cannot be more than 100% a month."),
     penalty_calculation: z.enum(["per_month_or_fraction", "daily_prorated"]),
+    delinquent_after_days: z.string().regex(/^\d+$/, "Enter a whole number of days."),
+    default_after_days: z.string().regex(/^\d+$/, "Enter a whole number of days."),
     agreement_terms: z.string().trim().min(1, "The agreement needs terms and conditions.").max(8000, "Keep the terms under 8,000 characters."),
   })
   .superRefine((values, context) => {
@@ -47,6 +49,17 @@ export const loanSettingsSchema = z
         path: ["session_idle_minutes"],
         message: "Use between 5 and 120 minutes.",
       });
+    }
+
+    const delinquent = Number(values.delinquent_after_days);
+    const defaulted = Number(values.default_after_days);
+
+    if (delinquent < 1 || delinquent > 365) {
+      context.addIssue({ code: "custom", path: ["delinquent_after_days"], message: "Use between 1 and 365 days." });
+    }
+
+    if (defaulted <= delinquent) {
+      context.addIssue({ code: "custom", path: ["default_after_days"], message: "A loan goes into default later than it becomes delinquent." });
     }
 
     const invalid = parseNetworks(values.networksText).filter((entry) => !isValidNetwork(entry));
@@ -74,6 +87,8 @@ export const toFormValues = (settings: LoanSettings): LoanSettingsFormValues => 
   penalty_rate_source: settings.penalty_rate_source,
   default_penalty_rate_percent: settings.default_penalty_rate_percent.replace(/\.?0+$/, "") || "0",
   penalty_calculation: settings.penalty_calculation,
+  delinquent_after_days: String(settings.delinquent_after_days),
+  default_after_days: String(settings.default_after_days),
   agreement_terms: settings.agreement_terms,
 });
 
@@ -89,5 +104,7 @@ export const toRequest = (values: LoanSettingsFormValues): LoanSettings => ({
   penalty_rate_source: values.penalty_rate_source,
   default_penalty_rate_percent: values.default_penalty_rate_percent,
   penalty_calculation: values.penalty_calculation,
+  delinquent_after_days: Number(values.delinquent_after_days),
+  default_after_days: Number(values.default_after_days),
   agreement_terms: values.agreement_terms.trim(),
 });

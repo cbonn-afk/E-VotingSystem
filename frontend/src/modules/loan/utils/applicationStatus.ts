@@ -64,6 +64,28 @@ export const formatDate = (value: string | null): string => {
 
 export const frequencyLabel = { weekly: "Weekly", semi_monthly: "Twice a month", monthly: "Monthly" } as const;
 export const interestMethodLabel = { diminishing: "Diminishing balance", flat: "Flat rate" } as const;
+export const collectionStatusLabel = {
+  current: "Current",
+  due: "Due today",
+  overdue: "Overdue",
+  delinquent: "Delinquent",
+  default: "Default",
+  paid: "Fully paid",
+} as const;
+
+export const collectionStatusColor = {
+  current: "success",
+  due: "info",
+  overdue: "warning",
+  delinquent: "error",
+  default: "error",
+  paid: "success",
+} as const;
+
+/** What a member sees: any late state reads simply as overdue. */
+export const memberCollectionLabel = (status: keyof typeof collectionStatusLabel): string =>
+  ["overdue", "delinquent", "default"].includes(status) ? "Overdue" : collectionStatusLabel[status];
+
 export const paymentMethodLabel = {
   cash: "Cash",
   check: "Check",

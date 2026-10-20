@@ -10,6 +10,8 @@ import Typography from "@mui/material/Typography";
 import Link from "@components/Link";
 import { useAuthorization } from "@/modules/auth/hooks/useAuthorization";
 
+import CollectionSummaryCards from "../components/CollectionSummaryCards";
+import { useCollectionSummary } from "../hooks/useCollections";
 import { useLoanSettings } from "../hooks/useLoanSettings";
 
 type Tile = { title: string; description: string; icon: string; href: string; visible: boolean };
@@ -18,21 +20,30 @@ export default function LoanOverviewView() {
   const authorization = useAuthorization();
   const canSeeSettings = authorization.can("loan.settings.manage");
   const settings = useLoanSettings(canSeeSettings).data?.data;
+  const canSeeLoans = authorization.can("loan.payments.view");
+  const collections = useCollectionSummary(canSeeLoans).data?.data;
 
   const tiles: Tile[] = [
-    // {
-    //   title: "Members",
-    //   description: "Add members, import them from Excel, and keep mobile numbers up to date.",
-    //   icon: "bx-id-card",
-    //   href: "/members",
-    //   visible: authorization.can("members.view"),
-    // },
+    {
+      title: "Members",
+      description: "Add members, import them from Excel, and keep mobile numbers up to date.",
+      icon: "bx-id-card",
+      href: "/members",
+      visible: authorization.can("members.view"),
+    },
     {
       title: "Applications",
-      description: "Review submitted applications, check documents, and return or reject them.",
+      description: "Review submitted applications, then accept, return or reject them.",
       icon: "bx-file",
       href: "/loan/applications",
       visible: authorization.can("loan.applications.view"),
+    },
+    {
+      title: "Collections",
+      description: "See which loans are overdue, delinquent or in default, and who to follow up.",
+      icon: "bx-bell",
+      href: "/loan/collections",
+      visible: canSeeLoans,
     },
     {
       title: "Loans and payments",
@@ -43,7 +54,7 @@ export default function LoanOverviewView() {
     },
     {
       title: "Loan products",
-      description: "Set amounts, interest, terms, fees, penalties, and the documents each product needs.",
+      description: "Set amounts, interest, terms, fees, and penalties for each product.",
       icon: "bx-purchase-tag-alt",
       href: "/loan/products",
       visible: authorization.can("loan.products.manage"),
@@ -67,13 +78,15 @@ export default function LoanOverviewView() {
   return (
     <Stack spacing={5}>
       <Stack spacing={0.5}>
-        <Typography variant="h4">Unlad</Typography>
+        <Typography variant="h4">Loan</Typography>
         <Typography variant="body2" color="text.secondary">
           Manage the cooperative&apos;s member portal and loan setup.
         </Typography>
       </Stack>
 
-      {/* <Card>
+      {collections && <CollectionSummaryCards summary={collections} showAging={false} />}
+
+      <Card>
         <CardContent>
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={2}>
             <Stack spacing={0.5}>
@@ -95,7 +108,7 @@ export default function LoanOverviewView() {
             )}
           </Stack>
         </CardContent>
-      </Card> */}
+      </Card>
 
       <Box className="grid gap-5 sm:grid-cols-2">
         {tiles

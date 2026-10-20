@@ -29,6 +29,8 @@ describe("loan settings schema", () => {
     penalty_rate_source: "coop_default" as const,
     default_penalty_rate_percent: "2",
     penalty_calculation: "per_month_or_fraction" as const,
+    delinquent_after_days: "30",
+    default_after_days: "90",
     agreement_terms: "1. The Borrower promises to repay.",
   };
 
@@ -52,6 +54,13 @@ describe("loan settings schema", () => {
     expect(loanSettingsSchema.safeParse({ ...valid, default_penalty_rate_percent: "150" }).success).toBe(false);
     expect(loanSettingsSchema.safeParse({ ...valid, default_penalty_rate_percent: "two" }).success).toBe(false);
     expect(loanSettingsSchema.safeParse({ ...valid, penalty_calculation: "weekly" }).success).toBe(false);
+  });
+
+  it("keeps default later than delinquent", () => {
+    expect(loanSettingsSchema.safeParse({ ...valid, delinquent_after_days: "15", default_after_days: "45" }).success).toBe(true);
+    expect(loanSettingsSchema.safeParse({ ...valid, delinquent_after_days: "30", default_after_days: "30" }).success).toBe(false);
+    expect(loanSettingsSchema.safeParse({ ...valid, delinquent_after_days: "0", default_after_days: "90" }).success).toBe(false);
+    expect(loanSettingsSchema.safeParse({ ...valid, delinquent_after_days: "x", default_after_days: "90" }).success).toBe(false);
   });
 
   it("rejects a bad network entry", () => {

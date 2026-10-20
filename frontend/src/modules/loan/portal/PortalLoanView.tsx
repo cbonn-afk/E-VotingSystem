@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import CollectionStatusChip from "../components/CollectionStatusChip";
 import LoanScheduleTable from "../components/LoanScheduleTable";
 import LoanSummaryCards from "../components/LoanSummaryCards";
 import PaymentHistory from "../components/PaymentHistory";
@@ -60,7 +60,7 @@ export default function PortalLoanView({ loanId }: { loanId: number }) {
             </Typography>
           </Stack>
           <Stack direction="row" spacing={2} alignItems="center">
-            <Chip size="small" variant="tonal" color={loan.status === "fully_paid" ? "success" : "info"} label={loan.status === "fully_paid" ? "Fully paid" : "Active"} />
+            <CollectionStatusChip status={loan.summary.collection_status} forMember />
             <Button color="secondary" onClick={() => router.push("/loan-portal/dashboard")}>
               Back
             </Button>

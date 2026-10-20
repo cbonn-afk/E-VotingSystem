@@ -80,6 +80,10 @@ export const routePolicies: readonly RoutePolicy[] = [
     permission: "loan.applications.view",
   },
   {
+    matches: (pathname) => isPath(pathname, "/loan/collections"),
+    permission: "loan.payments.view",
+  },
+  {
     matches: (pathname) => isPath(pathname, "/loan/loans"),
     permission: "loan.payments.view",
   },

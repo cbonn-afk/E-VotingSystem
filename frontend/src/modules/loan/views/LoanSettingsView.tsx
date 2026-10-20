@@ -40,6 +40,8 @@ const defaults: LoanSettingsFormValues = {
   penalty_rate_source: "coop_default",
   default_penalty_rate_percent: "2",
   penalty_calculation: "per_month_or_fraction",
+  delinquent_after_days: "30",
+  default_after_days: "90",
   agreement_terms: "",
 };
 
@@ -89,7 +91,7 @@ export default function LoanSettingsView() {
 
       <Paper className="p-6" component="form" noValidate onSubmit={save}>
         <Stack spacing={5}>
-          {/* <Controller
+          <Controller
             name="portal_access_mode"
             control={control}
             render={({ field }) => (
@@ -109,23 +111,23 @@ export default function LoanSettingsView() {
                 </RadioGroup>
               </Stack>
             )}
-          /> */}
+          />
 
-          {/* {mode === "online" && (
+          {mode === "online" && (
             <Alert severity="warning">
               Members sign in with their member code only. Online, anyone on the internet who knows or guesses a code
               can see that member&apos;s information. Keep &quot;Cooperative network only&quot; unless members must
               use the portal away from the office.
             </Alert>
-          )} */}
+          )}
 
-          {/* {mode === "network_only" && networkCount === 0 && (
+          {mode === "network_only" && networkCount === 0 && (
             <Alert severity="warning">
               No address is listed, so nobody can reach the portal. Add the cooperative&apos;s IP address or range.
             </Alert>
-          )} */}
+          )}
 
-          {/* <Controller
+          <Controller
             name="networksText"
             control={control}
             render={({ field }) => (
@@ -141,7 +143,7 @@ export default function LoanSettingsView() {
                 helperText={errors.networksText?.message ?? "One IP address or range per line, e.g. 192.168.1.0/24."}
               />
             )}
-          /> */}
+          />
 
           <Controller
             name="session_idle_minutes"
@@ -219,6 +221,30 @@ export default function LoanSettingsView() {
           <Typography variant="caption" color="text.secondary" sx={{ mt: -3 }}>
             Flat-rate products always charge interest on the original amount for the whole term, split evenly.
           </Typography>
+
+          <Typography variant="h6" sx={{ pt: 2 }}>
+            Overdue tracking
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: -3 }}>
+            Each night every active loan is labelled by how many days its oldest unpaid installment is late: overdue from day 1, then
+            delinquent, then default.
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
+            <Controller
+              name="delinquent_after_days"
+              control={control}
+              render={({ field }) => (
+                <CustomTextField {...field} fullWidth label="Delinquent after (days late)" error={Boolean(errors.delinquent_after_days)} helperText={errors.delinquent_after_days?.message ?? "Common practice: 30 days."} />
+              )}
+            />
+            <Controller
+              name="default_after_days"
+              control={control}
+              render={({ field }) => (
+                <CustomTextField {...field} fullWidth label="Default after (days late)" error={Boolean(errors.default_after_days)} helperText={errors.default_after_days?.message ?? "Common practice: 90 days."} />
+              )}
+            />
+          </Stack>
 
           <Controller
             name="agreement_terms"

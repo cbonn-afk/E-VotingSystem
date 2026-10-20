@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
 import MenuItem from "@mui/material/MenuItem";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -18,6 +17,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import CollectionStatusChip from "../components/CollectionStatusChip";
 import { useLoans } from "../hooks/useLoans";
 import type { LoanStatus } from "../types";
 import { formatDate, formatPeso } from "../utils/applicationStatus";
@@ -94,12 +94,7 @@ export default function LoansView() {
                 </TableCell>
                 <TableCell>{loan.summary.next_due ? `${formatPeso(loan.summary.next_due.amount)} on ${formatDate(loan.summary.next_due.due_date)}` : "-"}</TableCell>
                 <TableCell>
-                  <Chip
-                    size="small"
-                    variant="tonal"
-                    color={loan.status === "fully_paid" ? "success" : loan.summary.overdue_count > 0 ? "error" : "info"}
-                    label={loan.status === "fully_paid" ? "Fully paid" : loan.summary.overdue_count > 0 ? "Overdue" : "Active"}
-                  />
+                  <CollectionStatusChip status={loan.summary.collection_status} />
                 </TableCell>
               </TableRow>
             ))}

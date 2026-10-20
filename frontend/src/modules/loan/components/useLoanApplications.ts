@@ -39,12 +39,12 @@ export const useLoanApplicationActions = (id: number) => {
     }),
     previewAgreement: useMutation({ mutationFn: (date: string) => loanApplicationsApi.previewAgreement(id, date) }),
     generateAgreement: useMutation({ mutationFn: (date: string) => loanApplicationsApi.generateAgreement(id, date), onSuccess: accept }),
-    recordPaper: useMutation({ mutationFn: (file: File) => loanApplicationsApi.recordPaperAgreement(id, file), onSuccess: accept }),
+    // recordPaper: useMutation({ mutationFn: (file: File) => loanApplicationsApi.recordPaperAgreement(id, file), onSuccess: accept }),
     release: useMutation({ mutationFn: (body: ReleasePayload) => loanApplicationsApi.release(id, body), onSuccess: accept }),
-    reviewDocument: useMutation({
-      mutationFn: ({ documentId, status, remarks }: { documentId: number; status: "accepted" | "rejected"; remarks?: string }) =>
-        loanApplicationsApi.reviewDocument(id, documentId, status, remarks),
-      onSuccess: accept,
-    }),
+    // reviewDocument: useMutation({
+    //   mutationFn: ({ documentId, status, remarks }: { documentId: number; status: "accepted" | "rejected"; remarks?: string }) =>
+    //     loanApplicationsApi.reviewDocument(id, documentId, status, remarks),
+    //   onSuccess: accept,
+    // }),
   };
 };

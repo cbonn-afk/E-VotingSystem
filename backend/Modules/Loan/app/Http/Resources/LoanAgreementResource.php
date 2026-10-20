@@ -6,6 +6,7 @@ namespace Modules\Loan\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Loan\Models\LoanSetting;
 
 /** @mixin \Modules\Loan\Models\LoanAgreement */
 final class LoanAgreementResource extends JsonResource
@@ -37,6 +38,7 @@ final class LoanAgreementResource extends JsonResource
             'schedule' => $this->schedule,
             'terms_text' => $this->terms_text,
             'generated_at' => $this->generated_at?->toISOString(),
+            'signature_required' => LoanSetting::current()->signature_required,
         ];
     }
 }

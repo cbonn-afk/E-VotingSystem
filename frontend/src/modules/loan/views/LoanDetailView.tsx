@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -13,12 +12,13 @@ import { toast } from "react-toastify";
 
 import { ApiError } from "@/libs/api/apiError";
 
+import CollectionStatusChip from "../components/CollectionStatusChip";
 import LoanScheduleTable from "../components/LoanScheduleTable";
 import LoanSummaryCards from "../components/LoanSummaryCards";
 import PaymentHistory from "../components/PaymentHistory";
 import RecordPaymentForm from "../components/RecordPaymentForm";
 import { useLoan, useLoanActions } from "../hooks/useLoans";
-import { describePenalty, formatDate } from "../utils/applicationStatus";
+import { describePenalty, formatDate, formatPeso } from "../utils/applicationStatus";
 
 export default function LoanDetailView({ loanId }: { loanId: number }) {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function LoanDetailView({ loanId }: { loanId: number }) {
           </Typography>
         </Stack>
         <Stack direction="row" spacing={2} alignItems="center">
-          <Chip size="small" variant="tonal" color={loan.status === "fully_paid" ? "success" : "info"} label={loan.status === "fully_paid" ? "Fully paid" : "Active"} />
+          <CollectionStatusChip status={loan.summary.collection_status} />
           <Button color="secondary" onClick={() => router.push("/loan/loans")}>
             Back to loans
           </Button>
@@ -54,6 +54,11 @@ export default function LoanDetailView({ loanId }: { loanId: number }) {
       </Typography>
 
       {loan.status === "fully_paid" && <Alert severity="success">This loan is fully paid.</Alert>}
+      {loan.summary.days_past_due > 0 && (
+        <Alert severity={loan.summary.collection_status === "overdue" ? "warning" : "error"}>
+          {loan.summary.days_past_due} days past due: {formatPeso(loan.summary.overdue_amount)} of principal and interest is late, plus penalties.
+        </Alert>
+      )}
 
       {loan.can_record && (
         <RecordPaymentForm
