@@ -45,7 +45,7 @@ final class LoanApplicationResource extends JsonResource
                 return ['next_step' => $step, 'can_decide' => $reason === null, 'denial_reason' => $reason];
             }),
             'can_generate_agreement' => $this->when($request->user() !== null, fn () => in_array($this->status, [ApplicationStatus::APPROVED, ApplicationStatus::FOR_AGREEMENT, ApplicationStatus::FOR_RELEASE], true) && $request->user()->can('loan.applications.manage')),
-            'can_release' => $this->when($request->user() !== null, fn () => $this->status === ApplicationStatus::FOR_RELEASE && $request->user()->can('loan.release')),
+            'can_release' => $this->when($request->user() !== null, fn () => in_array($this->status, [ApplicationStatus::FOR_AGREEMENT, ApplicationStatus::FOR_RELEASE], true) && $request->user()->can('loan.release')),
             'agreement' => $this->whenLoaded('agreement', fn () => $this->agreement === null ? null : (new LoanAgreementResource($this->agreement))->resolve()),
             'loan' => $this->whenLoaded('loan', fn () => $this->loan === null ? null : (new LoanResource($this->loan))->resolve()),
             'evaluation' => $this->whenLoaded('evaluation', fn () => $this->evaluation === null ? null : [
@@ -75,14 +75,6 @@ final class LoanApplicationResource extends JsonResource
             'product' => $this->whenLoaded('product', fn () => (new LoanProductResource($this->product))->resolve()),
             'product_snapshot' => $this->when($this->product_snapshot !== null, $this->product_snapshot),
 
-            'documents' => $this->whenLoaded('documents', fn () => $this->documents->map(static fn ($d): array => [
-                'id' => $d->id,
-                'requirement' => $d->requirement,
-                'original_name' => $d->original_name,
-                'size' => $d->size,
-                'status' => $d->status,
-                'remarks' => $d->remarks,
-            ])->values()->all()),
 
             'guarantors' => $this->whenLoaded('guarantors', fn () => $this->guarantors->map(static fn ($g): array => [
                 'member_code' => $g->member->member_code,

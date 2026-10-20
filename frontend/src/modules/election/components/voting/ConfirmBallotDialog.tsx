@@ -18,7 +18,7 @@ type Props = {
   submitting: boolean;
   positions: PositionResource[] | null;
   selection: Record<number, number[]>;
-  amendments: AmendmentResource[] | null;
+  // amendments: AmendmentResource[] | null;
   choices: Record<number, AmendmentChoice | undefined>;
   onBack: () => void;
   onConfirm: () => void;
@@ -29,7 +29,7 @@ export default function ConfirmBallotDialog({
   submitting,
   positions,
   selection,
-  amendments,
+  // amendments,
   choices,
   onBack,
   onConfirm,
@@ -87,7 +87,7 @@ export default function ConfirmBallotDialog({
             })}
           </Stack>
         )}
-        {positions && amendments && <Divider />}
+        {/* {positions && amendments && <Divider />}
         {amendments && (
           <Stack spacing={1.5}>
             <Typography variant="h6">Amendments</Typography>
@@ -103,7 +103,7 @@ export default function ConfirmBallotDialog({
               </Stack>
             ))}
           </Stack>
-        )}
+        )} */}
       </Stack>
     </CustomDialog>
   );

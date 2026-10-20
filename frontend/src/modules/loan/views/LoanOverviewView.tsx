@@ -20,19 +20,26 @@ export default function LoanOverviewView() {
   const settings = useLoanSettings(canSeeSettings).data?.data;
 
   const tiles: Tile[] = [
-    {
-      title: "Members",
-      description: "Add members, import them from Excel, and keep mobile numbers up to date.",
-      icon: "bx-id-card",
-      href: "/members",
-      visible: authorization.can("members.view"),
-    },
+    // {
+    //   title: "Members",
+    //   description: "Add members, import them from Excel, and keep mobile numbers up to date.",
+    //   icon: "bx-id-card",
+    //   href: "/members",
+    //   visible: authorization.can("members.view"),
+    // },
     {
       title: "Applications",
       description: "Review submitted applications, check documents, and return or reject them.",
       icon: "bx-file",
       href: "/loan/applications",
       visible: authorization.can("loan.applications.view"),
+    },
+    {
+      title: "Loans and payments",
+      description: "Look up a loan, record a payment, print a receipt, and see what is overdue.",
+      icon: "bx-money",
+      href: "/loan/loans",
+      visible: authorization.can("loan.payments.view"),
     },
     {
       title: "Loan products",
@@ -60,13 +67,13 @@ export default function LoanOverviewView() {
   return (
     <Stack spacing={5}>
       <Stack spacing={0.5}>
-        <Typography variant="h4">Loan</Typography>
+        <Typography variant="h4">Unlad</Typography>
         <Typography variant="body2" color="text.secondary">
           Manage the cooperative&apos;s member portal and loan setup.
         </Typography>
       </Stack>
 
-      <Card>
+      {/* <Card>
         <CardContent>
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={2}>
             <Stack spacing={0.5}>
@@ -88,7 +95,7 @@ export default function LoanOverviewView() {
             )}
           </Stack>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <Box className="grid gap-5 sm:grid-cols-2">
         {tiles

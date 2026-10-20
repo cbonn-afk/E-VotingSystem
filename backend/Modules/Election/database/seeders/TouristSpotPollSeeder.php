@@ -99,7 +99,7 @@ final class TouristSpotPollSeeder extends Seeder
 
         DB::transaction(function () use ($assembly, $voters): void {
             Setting::query()->firstOrCreate([], [
-                'company_title' => 'Ilocos Farmers Multi-Purpose Cooperative',
+                'company_title' => 'Batman Travel Cooperative',
                 'document_title' => 'Philippine Tourist Spot Poll',
                 'document_sub_title' => 'Official results of the members\' vote',
             ]);

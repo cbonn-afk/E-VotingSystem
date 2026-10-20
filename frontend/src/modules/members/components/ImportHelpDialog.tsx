@@ -66,6 +66,10 @@ export default function ImportHelpDialog({ open, onClose }: Props) {
         <Alert severity='info' sx={{ mt: 3 }}>
           A member code that already exists is updated, not added again. Blank optional cells keep the current value.
         </Alert>
+        <Alert severity='info' sx={{ mt: 2 }}>
+          Every new member gets the portal password <b>Password123</b> and must change it at first sign-in. Importing
+          again never resets a password the member already changed.
+        </Alert>
         <Alert severity='warning' sx={{ mt: 2 }}>
           Format the mobile_number column as Text. Excel removes the leading 0 from numbers. The template already does this.
         </Alert>

@@ -19,7 +19,6 @@ use Modules\Loan\Http\Resources\LoanApplicationResource;
 use Modules\Loan\Http\Resources\LoanProductResource;
 use Modules\Loan\Models\LoanApplication;
 use Modules\Loan\Models\LoanProduct;
-use Modules\Loan\Support\AgreementService;
 use Modules\Loan\Support\ApplicationStatus;
 use Modules\Loan\Support\ApplicationWorkflow;
 use Modules\Members\Models\Member;
@@ -31,14 +30,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class PortalApplicationController extends Controller
 {
-    private const RELATIONS = ['member', 'product.documents', 'documents', 'guarantors.member', 'events', 'agreement', 'loan.scheduleItems', 'loan.release'];
+    private const RELATIONS = ['member', 'product', 'guarantors.member', 'events', 'loan.scheduleItems', 'loan.release'];
 
     public function __construct(private readonly ApplicationWorkflow $workflow) {}
 
     public function products(): AnonymousResourceCollection
     {
         return LoanProductResource::collection(
-            LoanProduct::query()->where('status', 'active')->with('documents')->orderBy('name')->get(),
+            LoanProduct::query()->where('status', 'active')->orderBy('name')->get(),
         );
     }
 
@@ -46,7 +45,7 @@ class PortalApplicationController extends Controller
     {
         $applications = LoanApplication::query()
             ->where('member_id', $this->member($request)->id)
-            ->with(['member', 'product.documents'])
+            ->with(['member', 'product'])
             ->orderByDesc('id')
             ->get();
 
@@ -107,61 +106,6 @@ class PortalApplicationController extends Controller
         return response()->json(null, 204);
     }
 
-    public function uploadDocument(Request $request, int $application): LoanApplicationResource
-    {
-        $model = $this->editable($request, $application)->load('product.documents');
-
-        $request->validate([
-            'requirement' => ['required', 'string', Rule::in($model->product->documents->pluck('name')->all())],
-            'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-        ]);
-
-        $file = $request->file('file');
-        $path = $file->store("loan/applications/{$model->id}", 'local');
-        $existing = $model->documents()->where('requirement', $request->input('requirement'))->first();
-
-        $attributes = [
-            'path' => $path,
-            'original_name' => Str::limit(basename($file->getClientOriginalName()), 200, ''),
-            'mime' => (string) $file->getMimeType(),
-            'size' => (int) $file->getSize(),
-            'status' => 'pending',
-            'remarks' => null,
-            'reviewed_by' => null,
-            'reviewed_at' => null,
-        ];
-
-        if ($existing === null) {
-            $model->documents()->create($attributes + ['requirement' => $request->input('requirement')]);
-        } else {
-            $oldPath = $existing->path;
-            $existing->update($attributes);
-            Storage::disk('local')->delete($oldPath);
-        }
-
-        AuditLogger::record(null, AuditAction::LoanDocumentUploaded, $model, null, ['requirement' => $request->input('requirement')]);
-
-        return new LoanApplicationResource($model->load(self::RELATIONS));
-    }
-
-    public function deleteDocument(Request $request, int $application, int $document): LoanApplicationResource
-    {
-        $model = $this->editable($request, $application);
-        $row = $model->documents()->findOrFail($document);
-
-        Storage::disk('local')->delete($row->path);
-        $row->delete();
-
-        return new LoanApplicationResource($model->load(self::RELATIONS));
-    }
-
-    public function downloadDocument(Request $request, int $application, int $document): StreamedResponse
-    {
-        $row = $this->own($request, $application)->documents()->findOrFail($document);
-
-        return Storage::disk('local')->download($row->path, $row->original_name);
-    }
-
     public function setGuarantors(Request $request, int $application): LoanApplicationResource
     {
         $model = $this->editable($request, $application);
@@ -218,20 +162,6 @@ class PortalApplicationController extends Controller
         $model->update(['signature_path' => $path, 'signed_at' => now()]);
 
         return new LoanApplicationResource($model->load(self::RELATIONS));
-    }
-
-    /** The member accepts the agreement. A drawn signature is required only when Loan settings say so. */
-    public function signAgreement(Request $request, int $application, AgreementService $agreements): LoanApplicationResource
-    {
-        $model = $this->own($request, $application);
-        $data = $request->validate([
-            'agreed' => ['accepted'],
-            'signature' => ['nullable', 'string', 'max:400000'],
-        ], ['agreed.accepted' => 'Confirm that you accept the agreement.']);
-
-        $agreements->signByMember($model, $data['signature'] ?? null);
-
-        return new LoanApplicationResource($model->refresh()->load(self::RELATIONS));
     }
 
     public function submit(Request $request, int $application): LoanApplicationResource

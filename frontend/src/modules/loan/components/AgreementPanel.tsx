@@ -20,7 +20,7 @@ import { firstDueProblem, suggestFirstDue } from "../utils/firstDue";
 const messageOf = (error: unknown): string =>
   error instanceof ApiError ? (error.errors.first_due_date?.[0] ?? error.errors.status?.[0] ?? error.errors.file?.[0] ?? error.message) : "Something went wrong. Try again.";
 
-/** Staff: create the agreement from the approved terms, then record how the member signed it. */
+/** Staff: create the agreement from the approved terms. The loan is then ready for release. */
 export default function AgreementPanel({ application }: { application: LoanApplication }) {
   const actions = useLoanApplicationActions(application.id);
   const agreement = application.agreement ?? null;
@@ -64,34 +64,11 @@ export default function AgreementPanel({ application }: { application: LoanAppli
               Release amount: <strong>{formatPeso(agreement.net_proceeds)}</strong>
               {agreement.fee_handling === "deduct_from_proceeds" ? " (after fees)" : " (fees collected separately)"}
             </Typography>
-            {agreement.signed_at ? (
-              <Alert severity="success">
-                {agreement.signed_method === "portal" ? "The member accepted it in the portal." : "A signed paper copy was recorded."}
-              </Alert>
-            ) : (
-              <Alert severity="info">Waiting for the member to sign. They can accept it in the portal, or you can record a signed paper copy.</Alert>
-            )}
+            <Alert severity="success">The agreement is ready. print it if the cooperative keeps a paper copy.</Alert>
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <Button variant="outlined" href={`/loan/applications/${application.id}/agreement`} target="_blank" rel="noopener">
                 View or print agreement
               </Button>
-              {agreement.has_paper_copy && <Typography variant="body2" sx={{ alignSelf: "center" }}>Paper copy on file</Typography>}
-              {canManage && application.status === "for_agreement" && (
-                <Button variant="outlined" component="label" disabled={actions.recordPaper.isPending}>
-                  Record signed paper copy
-                  <input
-                    hidden
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-
-                      event.target.value = "";
-                      if (file) actions.recordPaper.mutate(file, { onSuccess: () => toast.success("Paper copy recorded."), onError: (e) => toast.error(messageOf(e)) });
-                    }}
-                  />
-                </Button>
-              )}
               {canManage && !editing && (
                 <Button color="warning" onClick={() => setEditing(true)}>
                   Change first due date
@@ -103,7 +80,7 @@ export default function AgreementPanel({ application }: { application: LoanAppli
 
         {showForm && (
           <Stack spacing={2}>
-            {agreement && <Alert severity="warning">Making a new agreement cancels the current one and any signature on it.</Alert>}
+            {agreement && <Alert severity="warning">Making a new agreement replaces the current one.</Alert>}
             <TextField
               type="date"
               label="First payment due"

@@ -28,12 +28,12 @@ export const electionNavigation: ElectionNavigationGroup[] = [
         icon: "bx-id-card",
         permission: "election.registration.view",
       },
-      {
-        label: "Token Distribution",
-        href: "/election/tokens",
-        icon: "bx-gift",
-        permission: "election.tokens.manage",
-      },
+      // {
+      //   label: "Token Distribution",
+      //   href: "/election/tokens",
+      //   icon: "bx-gift",
+      //   permission: "election.tokens.manage",
+      // },
     ],
   },
   {
@@ -45,12 +45,12 @@ export const electionNavigation: ElectionNavigationGroup[] = [
         icon: "bx-user-pin",
         permission: "election.ballot.view",
       },
-      {
-        label: "Amendments",
-        href: "/election/amendments",
-        icon: "bx-file",
-        permission: "election.ballot.view",
-      },
+      // {
+      //   label: "Amendments",
+      //   href: "/election/amendments",
+      //   icon: "bx-file",
+      //   permission: "election.ballot.view",
+      // },
       {
         label: "Voting Station",
         href: "/election/voting",

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Modules\Loan\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Members\Models\Member;
 
 class Loan extends Model
 {
@@ -18,8 +20,19 @@ class Loan extends Model
     {
         return [
             'principal' => 'decimal:2', 'total_interest' => 'decimal:2', 'outstanding_balance' => 'decimal:2',
-            'first_due_date' => 'date:Y-m-d', 'maturity_date' => 'date:Y-m-d', 'released_at' => 'datetime',
+            'penalty_rate_percent' => 'decimal:3', 'first_due_date' => 'date:Y-m-d', 'maturity_date' => 'date:Y-m-d',
+            'released_at' => 'datetime', 'fully_paid_at' => 'datetime',
         ];
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(LoanProduct::class, 'product_id');
     }
 
     public function scheduleItems(): HasMany
@@ -30,5 +43,10 @@ class Loan extends Model
     public function release(): HasOne
     {
         return $this->hasOne(LoanRelease::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(LoanPayment::class)->orderByDesc('id');
     }
 }

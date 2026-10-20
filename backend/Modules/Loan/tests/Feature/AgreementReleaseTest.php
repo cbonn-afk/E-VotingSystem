@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Loan\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\IdentityAccess\Models\User;
 use Modules\Loan\Models\LoanAgreement;
@@ -81,13 +80,6 @@ final class AgreementReleaseTest extends TestCase
         $this->withUnencryptedCookie('loan_portal_session', $res->getCookie('loan_portal_session', false)->getValue());
     }
 
-    private function memberAccepts(array $body = ['agreed' => true])
-    {
-        $this->memberSignsIn();
-
-        return $this->postJson("/api/loan-portal/applications/{$this->application->id}/agreement/sign", $body, ['X-Requested-With' => 'XMLHttpRequest']);
-    }
-
     private function release(array $body = [], ?User $by = null)
     {
         $this->actingAs($by ?? $this->staff(['loan.release']));
@@ -97,7 +89,7 @@ final class AgreementReleaseTest extends TestCase
 
     public function test_generating_an_agreement_uses_the_approved_amount_and_the_frozen_terms(): void
     {
-        $res = $this->generate()->assertOk()->assertJsonPath('data.status', 'for_agreement');
+        $res = $this->generate()->assertOk()->assertJsonPath('data.status', 'for_release');
 
         $agreement = $res->json('data.agreement');
         $this->assertMatchesRegularExpression('/^AG-\d{4}-\d{6}$/', $agreement['agreement_no']);
@@ -156,48 +148,35 @@ final class AgreementReleaseTest extends TestCase
         $this->generate(null, $this->staff([]))->assertForbidden();
     }
 
-    public function test_the_member_accepts_the_agreement_and_the_loan_moves_to_release(): void
+    public function test_release_needs_the_release_permission_and_an_agreement(): void
     {
+        $this->release()->assertStatus(422);                              // no agreement yet
+
         $this->generate()->assertOk();
-
-        $this->memberAccepts(['agreed' => false])->assertStatus(422)->assertJsonValidationErrors('agreed');
-        $this->memberAccepts()->assertOk()->assertJsonPath('data.status', 'for_release')->assertJsonPath('data.agreement.signed_method', 'portal');
-    }
-
-    public function test_a_signature_is_required_when_loan_settings_require_one(): void
-    {
-        LoanSetting::current()->update(['signature_required' => true]);
-        $this->generate()->assertOk();
-
-        $this->memberAccepts()->assertStatus(422)->assertJsonValidationErrors('signature');
-
-        $png = 'data:image/png;base64,'.base64_encode("\x89PNG\r\n\x1a\n".str_repeat('x', 40));
-        $this->memberAccepts(['agreed' => true, 'signature' => $png])->assertOk()->assertJsonPath('data.status', 'for_release');
-        Storage::disk('local')->assertExists("loan/applications/{$this->application->id}/agreement-signature.png");
-    }
-
-    public function test_staff_can_record_a_signed_paper_copy(): void
-    {
-        $this->generate()->assertOk();
-        $this->actingAs($this->staff(['loan.applications.manage']));
-
-        $this->postJson("/api/loan/applications/{$this->application->id}/agreement/paper", ['file' => UploadedFile::fake()->create('signed.pdf', 200, 'application/pdf')])
-            ->assertOk()->assertJsonPath('data.status', 'for_release')->assertJsonPath('data.agreement.signed_method', 'paper')->assertJsonPath('data.agreement.has_paper_copy', true);
-    }
-
-    public function test_release_needs_the_release_permission_and_a_signed_agreement(): void
-    {
-        $this->generate()->assertOk();
-
-        $this->release()->assertStatus(422);                              // not signed yet
-        $this->memberAccepts()->assertOk();
         $this->release([], $this->staff([]))->assertForbidden();         // no loan.release
+        $this->release()->assertOk();
+    }
+
+    public function test_the_member_is_not_asked_to_accept_the_agreement(): void
+    {
+        $this->generate()->assertOk()->assertJsonPath('data.status', 'for_release');
+        $this->memberSignsIn();
+
+        // the member sign-off route no longer exists
+        $this->postJson("/api/loan-portal/applications/{$this->application->id}/agreement/sign", ['agreed' => true], ['X-Requested-With' => 'XMLHttpRequest'])->assertStatus(404);
+    }
+
+    public function test_an_agreement_that_was_waiting_for_a_signature_can_still_be_released(): void
+    {
+        $this->generate()->assertOk();
+        $this->application->refresh()->update(['status' => 'for_agreement']);   // how loans waiting for a signature looked before
+
+        $this->release()->assertOk()->assertJsonPath('data.status', 'released');
     }
 
     public function test_release_creates_the_loan_its_schedule_and_a_receipt(): void
     {
         $this->generate()->assertOk();
-        $this->memberAccepts()->assertOk();
 
         $res = $this->release(['remarks' => 'Over the counter'])->assertOk()->assertJsonPath('data.status', 'released');
 
@@ -216,7 +195,6 @@ final class AgreementReleaseTest extends TestCase
     public function test_a_check_or_transfer_needs_a_reference(): void
     {
         $this->generate()->assertOk();
-        $this->memberAccepts()->assertOk();
 
         $this->release(['method' => 'check'])->assertStatus(422)->assertJsonValidationErrors('reference_no');
         $this->release(['method' => 'check', 'reference_no' => 'CHK-0042'])->assertOk()->assertJsonPath('data.loan.release.reference_no', 'CHK-0042');
@@ -226,7 +204,6 @@ final class AgreementReleaseTest extends TestCase
     {
         LoanSetting::current()->update(['fee_handling' => 'collect_separately']);
         $this->generate()->assertOk();
-        $this->memberAccepts()->assertOk();
 
         $this->release()->assertStatus(422)->assertJsonValidationErrors('fees_collected');
         $this->release(['fees_collected' => true])->assertOk()->assertJsonPath('data.loan.release.amount_released', '100000.00');
@@ -235,29 +212,28 @@ final class AgreementReleaseTest extends TestCase
     public function test_release_is_blocked_once_the_first_due_date_has_passed(): void
     {
         $this->generate()->assertOk();
-        $this->memberAccepts()->assertOk();
         LoanAgreement::query()->update(['first_due_date' => now()->subDay()->format('Y-m-d')]);
 
         $this->release()->assertStatus(422);
     }
 
-    public function test_regenerating_the_agreement_voids_the_signature(): void
+    public function test_regenerating_replaces_the_agreement_and_keeps_the_loan_ready_for_release(): void
     {
         $this->generate()->assertOk();
-        $this->memberAccepts()->assertOk();
 
-        $this->generate(now()->addMonths(2)->format('Y-m-d'))->assertOk()->assertJsonPath('data.status', 'for_agreement')->assertJsonPath('data.agreement.signed_at', null);
+        $this->generate(now()->addMonths(2)->format('Y-m-d'))->assertOk()->assertJsonPath('data.status', 'for_release');
         $this->assertSame(1, LoanAgreement::query()->count());
     }
 
-    public function test_the_member_sees_the_agreement_and_schedule_but_no_staff_only_fields(): void
+    public function test_the_member_does_not_receive_the_agreement_or_staff_only_fields(): void
     {
         $this->generate()->assertOk();
         $this->memberSignsIn();
 
         $body = $this->getJson("/api/loan-portal/applications/{$this->application->id}")->assertOk()->json('data');
 
-        $this->assertCount(12, $body['agreement']['schedule']);
+        $this->assertSame('for_release', $body['status']);
+        $this->assertArrayNotHasKey('agreement', $body);
         $this->assertArrayNotHasKey('can_release', $body);
         $this->assertArrayNotHasKey('can_generate_agreement', $body);
     }

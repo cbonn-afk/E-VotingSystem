@@ -30,6 +30,12 @@ export const loanSettingsSchema = z
     fee_handling: z.enum(["deduct_from_proceeds", "collect_separately"]),
     payment_allocation: z.enum(["penalty_interest_principal", "interest_penalty_principal"]),
     penalty_basis: z.enum(["installment", "principal_balance"]),
+    penalty_rate_source: z.enum(["coop_default", "product"]),
+    default_penalty_rate_percent: z
+      .string()
+      .regex(/^\d{1,3}(\.\d{1,3})?$/, "Enter a percentage like 2 or 1.5.")
+      .refine((value) => Number(value) <= 100, "A penalty cannot be more than 100% a month."),
+    penalty_calculation: z.enum(["per_month_or_fraction", "daily_prorated"]),
     agreement_terms: z.string().trim().min(1, "The agreement needs terms and conditions.").max(8000, "Keep the terms under 8,000 characters."),
   })
   .superRefine((values, context) => {
@@ -65,6 +71,9 @@ export const toFormValues = (settings: LoanSettings): LoanSettingsFormValues => 
   fee_handling: settings.fee_handling,
   payment_allocation: settings.payment_allocation,
   penalty_basis: settings.penalty_basis,
+  penalty_rate_source: settings.penalty_rate_source,
+  default_penalty_rate_percent: settings.default_penalty_rate_percent.replace(/\.?0+$/, "") || "0",
+  penalty_calculation: settings.penalty_calculation,
   agreement_terms: settings.agreement_terms,
 });
 
@@ -77,5 +86,8 @@ export const toRequest = (values: LoanSettingsFormValues): LoanSettings => ({
   fee_handling: values.fee_handling,
   payment_allocation: values.payment_allocation,
   penalty_basis: values.penalty_basis,
+  penalty_rate_source: values.penalty_rate_source,
+  default_penalty_rate_percent: values.default_penalty_rate_percent,
+  penalty_calculation: values.penalty_calculation,
   agreement_terms: values.agreement_terms.trim(),
 });

@@ -1,24 +1,27 @@
 "use client";
 
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import type { LoanAccount, LoanAgreement, LoanApplication } from "../types";
-import { formatDate, formatDateTime, formatPeso, frequencyLabel, interestMethodLabel, releaseMethodLabel } from "../utils/applicationStatus";
+import type { LoanAccount, LoanAgreement, LoanApplication, LoanDetail, LoanPaymentRecord } from "../types";
+import { describePenalty, formatDate, formatDateTime, formatPeso, frequencyLabel, interestMethodLabel, paymentMethodLabel, releaseMethodLabel } from "../utils/applicationStatus";
 import ScheduleTable from "./ScheduleTable";
-import PrintDocumentFrame from "@/modules/documents/components/PrintDocumentFrame";
-import { useCurrentUser } from "@/modules/auth/hooks/useCurrentUser";
-import { useDocumentSettings } from "@/modules/documents/hooks/useDocumentSettings";
 
-/**
- * Kept for the existing print views. Print rules (hiding the page chrome,
- * `.no-print`, paper size, margins, footer) now live in the shared
- * PrintDocumentFrame and follow Settings > Documents.
- */
+/** Hides everything except the document when printing, and the Print button itself. */
 export function PrintStyles() {
-  return null;
+  return (
+    <style>{`
+      @media print {
+        body * { visibility: hidden !important; }
+        .print-area, .print-area * { visibility: visible !important; }
+        .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; box-shadow: none !important; }
+        .no-print { display: none !important; }
+      }
+    `}</style>
+  );
 }
 
 export function PrintButton({ label = "Print or save as PDF" }: { label?: string }) {
@@ -40,23 +43,31 @@ const Row = ({ label, value }: { label: string; value: string }) => (
   </Stack>
 );
 
-export function AgreementDocument({ application, agreement }: { application: LoanApplication; agreement: LoanAgreement }) {
-  const settings = useDocumentSettings();
-  const fees = Number(agreement.processing_fee) + Number(agreement.service_fee);
-  const accepted =
-    agreement.signed_method === "portal"
-      ? `Accepted electronically by ${application.member?.name ?? "the Borrower"} on ${formatDateTime(agreement.signed_at)}.`
-      : agreement.signed_method === "paper"
-        ? `A signed paper copy was received on ${formatDateTime(agreement.signed_at)}.`
-        : null;
+const SignatureLine = ({ label, note }: { label: string; note?: string }) => (
+  <Stack spacing={0.5} sx={{ flex: 1 }}>
+    <Box sx={{ borderBottom: 1, borderColor: "text.primary", height: 48 }} />
+    <Typography variant="caption">{label}</Typography>
+    {note && (
+      <Typography variant="caption" color="text.secondary">
+        {note}
+      </Typography>
+    )}
+  </Stack>
+);
 
+export function AgreementDocument({ application, agreement }: { application: LoanApplication; agreement: LoanAgreement }) {
+  const fees = Number(agreement.processing_fee) + Number(agreement.service_fee);
   return (
-    <PrintDocumentFrame
-      title="Loan Agreement"
-      subtitle={`${agreement.agreement_no} · Application ${application.reference_no} · ${formatDate(agreement.generated_at)}`}
-      signatures={[{ label: "Borrower", note: application.member?.name }, { label: "For the Cooperative" }]}
-    >
+    <Box className="print-area" sx={{ bgcolor: "background.paper", p: 5, maxWidth: 820, mx: "auto" }}>
       <Stack spacing={3}>
+        <Stack alignItems="center" spacing={0.5}>
+          <Typography variant="h5" fontWeight="bold">
+            LOAN AGREEMENT
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {agreement.agreement_no} · Application {application.reference_no} · {formatDate(agreement.generated_at)}
+          </Typography>
+        </Stack>
 
         <Typography variant="body2">
           Between the Cooperative (the &quot;Lender&quot;) and <strong>{application.member?.name}</strong> (Member code {application.member?.member_code}), the
@@ -76,7 +87,7 @@ export function AgreementDocument({ application, agreement }: { application: Loa
             value={formatPeso(agreement.net_proceeds)}
           />
           {agreement.fee_handling === "collect_separately" && fees > 0 && <Row label="Fees paid separately" value={formatPeso(fees)} />}
-          <Row label="Late penalty" value={`${Number(agreement.penalty_rate_percent)}% a month after a ${agreement.grace_period_days}-day grace period`} />
+          <Row label="Late penalty" value={describePenalty(agreement.penalty_rate_percent, agreement.penalty_basis, agreement.penalty_calculation, agreement.grace_period_days)} />
           <Row label="First payment due" value={formatDate(agreement.first_due_date)} />
           <Row label="Final payment due" value={formatDate(agreement.maturity_date)} />
         </Stack>
@@ -86,33 +97,37 @@ export function AgreementDocument({ application, agreement }: { application: Loa
         <ScheduleTable items={agreement.schedule} />
 
         <Divider />
-        <Typography variant="subtitle1">{settings.termsTitle}</Typography>
+        <Typography variant="subtitle1">Terms and conditions</Typography>
         <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
           {agreement.terms_text}
         </Typography>
 
         <Divider />
-        {accepted && <Typography variant="body2">{accepted}</Typography>}
+        <Stack direction="row" spacing={6} sx={{ pt: 3 }}>
+          <SignatureLine label="Borrower" note={application.member?.name} />
+          <SignatureLine label="For the Cooperative" />
+        </Stack>
       </Stack>
-    </PrintDocumentFrame>
+    </Box>
   );
 }
 
 export function ReceiptDocument({ application, loan }: { application: LoanApplication; loan: LoanAccount }) {
   const release = loan.release;
-  const currentUser = useCurrentUser().data?.name;
 
   if (!release) return null;
 
-  const releasedBy = release.released_by_name || currentUser;
-
   return (
-    <PrintDocumentFrame
-      title="Loan Release Receipt"
-      subtitle={`${release.receipt_no} · ${formatDateTime(release.released_at)}`}
-      signatures={[{ label: "Received by (Borrower)" }, { label: "Released by", note: releasedBy }]}
-    >
+    <Box className="print-area" sx={{ bgcolor: "background.paper", p: 5, maxWidth: 620, mx: "auto" }}>
       <Stack spacing={3}>
+        <Stack alignItems="center" spacing={0.5}>
+          <Typography variant="h5" fontWeight="bold">
+            LOAN RELEASE RECEIPT
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {release.receipt_no} · {formatDateTime(release.released_at)}
+          </Typography>
+        </Stack>
 
         <Stack spacing={0.75}>
           <Row label="Member" value={`${application.member?.name} (${application.member?.member_code})`} />
@@ -122,11 +137,49 @@ export function ReceiptDocument({ application, loan }: { application: LoanApplic
           <Row label="Amount released" value={formatPeso(release.amount_released)} />
           <Row label="Method" value={`${releaseMethodLabel[release.method]}${release.reference_no ? ` · ${release.reference_no}` : ""}`} />
           <Row label="First payment due" value={formatDate(loan.first_due_date)} />
-          <Row label="Released by" value={releasedBy ?? ""} />
+          <Row label="Released by" value={release.released_by_name} />
           {release.remarks && <Row label="Remarks" value={release.remarks} />}
         </Stack>
 
+        <Stack direction="row" spacing={6} sx={{ pt: 4 }}>
+          <SignatureLine label="Received by (Borrower)" />
+          <SignatureLine label="Released by" note={release.released_by_name} />
+        </Stack>
       </Stack>
-    </PrintDocumentFrame>
+    </Box>
+  );
+}
+
+export function PaymentReceiptDocument({ loan, payment }: { loan: LoanDetail; payment: LoanPaymentRecord }) {
+  return (
+    <Box className="print-area" sx={{ bgcolor: "background.paper", p: 5, maxWidth: 620, mx: "auto" }}>
+      <Stack spacing={3}>
+        <Stack alignItems="center" spacing={0.5}>
+          <Typography variant="h5" fontWeight="bold">
+            PAYMENT RECEIPT
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {payment.receipt_no} · {formatDate(payment.paid_on)}
+          </Typography>
+        </Stack>
+
+        <Stack spacing={0.75}>
+          <Row label="Received from" value={`${loan.member?.name} (${loan.member?.member_code})`} />
+          <Row label="Loan" value={`${loan.loan_no} · ${loan.product?.name}`} />
+          <Row label="Amount received" value={formatPeso(payment.amount)} />
+          <Row label="Paid by" value={`${paymentMethodLabel[payment.method]}${payment.reference_no ? ` · ${payment.reference_no}` : ""}`} />
+          <Row label="Applied to penalty" value={formatPeso(payment.applied_to.penalty)} />
+          <Row label="Applied to interest" value={formatPeso(payment.applied_to.interest)} />
+          <Row label="Applied to principal" value={formatPeso(payment.applied_to.principal)} />
+          <Row label="Balance after this payment" value={formatPeso(Number(payment.balance_after) + Number(payment.penalty_after))} />
+          {payment.received_by_name && <Row label="Received by" value={payment.received_by_name} />}
+        </Stack>
+
+        <Stack direction="row" spacing={6} sx={{ pt: 4 }}>
+          <SignatureLine label="Received by" note={payment.received_by_name} />
+          <SignatureLine label="Paid by (Borrower)" />
+        </Stack>
+      </Stack>
+    </Box>
   );
 }

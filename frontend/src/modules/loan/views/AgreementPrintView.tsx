@@ -7,15 +7,12 @@ import Stack from "@mui/material/Stack";
 
 import { AgreementDocument, PrintButton, PrintStyles } from "../components/PrintDocuments";
 import { useLoanApplication } from "../hooks/useLoanApplications";
-import { usePortalApplication } from "../portal/usePortalApplications";
 
-type Props = { applicationId: number; audience: "staff" | "member" };
+type Props = { applicationId: number };
 
 /** One page with only the agreement, ready to print or save as a PDF. */
-export default function AgreementPrintView({ applicationId, audience }: Props) {
-  const staff = useLoanApplication(applicationId, audience === "staff");
-  const member = usePortalApplication(applicationId, audience === "member");
-  const query = audience === "staff" ? staff : member;
+export default function AgreementPrintView({ applicationId }: Props) {
+  const query = useLoanApplication(applicationId);
   const application = query.data?.data;
 
   if (query.isPending) return <CircularProgress size={32} />;

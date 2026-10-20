@@ -12,8 +12,6 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Modules\IdentityAccess\Enums\AuditAction;
-use Modules\IdentityAccess\Support\AuditLogger;
 use Modules\Loan\Http\Resources\LoanApplicationResource;
 use Modules\Loan\Models\LoanApplication;
 use Modules\Loan\Models\LoanApplicationEvaluation;
@@ -27,7 +25,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** Staff queue. Drafts are private to the member, so nothing that was never submitted is listed. */
 class LoanApplicationController extends Controller
 {
-    private const RELATIONS = ['member', 'product.documents', 'documents', 'guarantors.member', 'events', 'evaluation', 'approvals', 'agreement', 'loan.scheduleItems', 'loan.release'];
+    private const RELATIONS = ['member', 'product', 'guarantors.member', 'events', 'evaluation', 'approvals', 'agreement', 'loan.scheduleItems', 'loan.release'];
 
     public function __construct(private readonly ApplicationWorkflow $workflow) {}
 
@@ -37,7 +35,7 @@ class LoanApplicationController extends Controller
 
         $applications = LoanApplication::query()
             ->whereNotNull('submitted_at')
-            ->with(['member', 'product.documents'])
+            ->with(['member', 'product'])
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->query('status')))
             ->when($q !== '', fn ($query) => $query->where(function ($w) use ($q): void {
                 $w->whereLike('reference_no', "%{$q}%")->orWhereHas('member', function ($m) use ($q): void {
@@ -125,25 +123,6 @@ class LoanApplicationController extends Controller
         return new LoanApplicationResource($model->refresh()->load(self::RELATIONS));
     }
 
-    public function recordPaperAgreement(Request $request, int $application, AgreementService $agreements): LoanApplicationResource
-    {
-        $request->validate(['file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240']]);
-        $model = $this->submitted($application);
-
-        $agreements->recordPaper($model, $request->user(), $request->file('file'));
-
-        return new LoanApplicationResource($model->refresh()->load(self::RELATIONS));
-    }
-
-    public function paperAgreement(int $application): StreamedResponse
-    {
-        $agreement = $this->submitted($application)->agreement;
-
-        abort_if($agreement === null || $agreement->paper_path === null, 404);
-
-        return Storage::disk('local')->download($agreement->paper_path, "agreement-{$agreement->agreement_no}.".pathinfo($agreement->paper_path, PATHINFO_EXTENSION));
-    }
-
     public function release(Request $request, int $application, ReleaseService $releases): LoanApplicationResource
     {
         $data = $request->validate([
@@ -157,42 +136,6 @@ class LoanApplicationController extends Controller
         $releases->release($model, $request->user(), $data);
 
         return new LoanApplicationResource($model->refresh()->load(self::RELATIONS));
-    }
-
-    public function reviewDocument(Request $request, int $application, int $document): LoanApplicationResource
-    {
-        $model = $this->submitted($application);
-
-        if ($model->status !== ApplicationStatus::DOCUMENT_REVIEW) {
-            throw ValidationException::withMessages(['status' => ['Start the document review first.']]);
-        }
-
-        $data = $request->validate([
-            'status' => ['required', Rule::in(['accepted', 'rejected'])],
-            'remarks' => ['nullable', 'string', 'max:500', 'required_if:status,rejected'],
-        ], ['remarks.required_if' => 'Say what is wrong with the document.']);
-
-        $row = $model->documents()->findOrFail($document);
-        $row->update([
-            'status' => $data['status'],
-            'remarks' => $data['status'] === 'rejected' ? $data['remarks'] : null,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
-
-        AuditLogger::record($request->user(), AuditAction::LoanDocumentReviewed, $model, null, [
-            'requirement' => $row->requirement,
-            'status' => $data['status'],
-        ]);
-
-        return new LoanApplicationResource($model->load(self::RELATIONS));
-    }
-
-    public function downloadDocument(int $application, int $document): StreamedResponse
-    {
-        $row = $this->submitted($application)->documents()->findOrFail($document);
-
-        return Storage::disk('local')->download($row->path, $row->original_name);
     }
 
     public function signature(int $application): StreamedResponse

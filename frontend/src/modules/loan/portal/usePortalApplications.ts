@@ -29,15 +29,8 @@ export const usePortalApplicationActions = (id?: number) => {
       onSuccess: accept,
     }),
     update: useMutation({ mutationFn: (body: ApplicationDetailsPayload) => api.update(id as number, body), onSuccess: accept }),
-    upload: useMutation({
-      mutationFn: ({ requirement, file }: { requirement: string; file: File }) =>
-        api.uploadDocument(id as number, requirement, file),
-      onSuccess: accept,
-    }),
-    removeDocument: useMutation({ mutationFn: (documentId: number) => api.deleteDocument(id as number, documentId), onSuccess: accept }),
     guarantors: useMutation({ mutationFn: (codes: string[]) => api.setGuarantors(id as number, codes), onSuccess: accept }),
     signature: useMutation({ mutationFn: (dataUrl: string) => api.saveSignature(id as number, dataUrl), onSuccess: accept }),
-    acceptAgreement: useMutation({ mutationFn: (signature: string | null) => api.signAgreement(id as number, signature), onSuccess: accept }),
     submit: useMutation({ mutationFn: () => api.submit(id as number), onSuccess: accept }),
     cancel: useMutation({
       mutationFn: () => api.cancel(id as number),

@@ -30,7 +30,7 @@ export default function ElectionDashboardView() {
   return (
     <Stack spacing={5}>
       <ElectionPageHeader
-        title="Election"
+        title="Sulong"
         description="Run the general assembly: attendance, voting, and results."
       />
 

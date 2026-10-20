@@ -4,6 +4,8 @@ export type DiminishingMethod = "equal_installment" | "fixed_principal";
 export type FeeHandling = "deduct_from_proceeds" | "collect_separately";
 export type PaymentAllocation = "penalty_interest_principal" | "interest_penalty_principal";
 export type PenaltyBasis = "installment" | "principal_balance";
+export type PenaltyRateSource = "coop_default" | "product";
+export type PenaltyCalculation = "per_month_or_fraction" | "daily_prorated";
 
 export type LoanSettings = {
   portal_access_mode: PortalAccessMode;
@@ -14,6 +16,9 @@ export type LoanSettings = {
   fee_handling: FeeHandling;
   payment_allocation: PaymentAllocation;
   penalty_basis: PenaltyBasis;
+  penalty_rate_source: PenaltyRateSource;
+  default_penalty_rate_percent: string;
+  penalty_calculation: PenaltyCalculation;
   agreement_terms: string;
 };
 
@@ -29,8 +34,6 @@ export type PortalMember = {
 export type InterestMethod = "diminishing" | "flat";
 export type PaymentFrequency = "weekly" | "semi_monthly" | "monthly";
 export type ProductStatus = "active" | "inactive";
-
-export type ProductDocument = { name: string; is_required: boolean };
 
 /** Money and percentages arrive as decimal strings (e.g. "5000.00") so no precision is lost. */
 export type LoanProduct = {
@@ -54,7 +57,6 @@ export type LoanProduct = {
   requires_collateral: boolean;
   min_membership_months: number;
   status: ProductStatus;
-  documents: ProductDocument[];
 };
 
 export type LoanProductPayload = Omit<LoanProduct, "id">;
@@ -77,17 +79,6 @@ export type ApplicationStatus =
   | "released"
   | "rejected"
   | "cancelled";
-
-export type DocumentStatus = "pending" | "accepted" | "rejected";
-
-export type ApplicationDocument = {
-  id: number;
-  requirement: string;
-  original_name: string;
-  size: number;
-  status: DocumentStatus;
-  remarks: string | null;
-};
 
 export type ApplicationEvent = {
   from_status: ApplicationStatus | null;
@@ -123,7 +114,6 @@ export type LoanApplication = {
   product?: LoanProduct;
   /** The product's terms as they were when the member submitted. */
   product_snapshot?: { interest_rate: string; interest_method: InterestMethod } & Record<string, unknown>;
-  documents?: ApplicationDocument[];
   /** Staff-only fields below are never sent to the member portal. */
   can_evaluate?: boolean;
   can_generate_agreement?: boolean;
@@ -214,16 +204,15 @@ export type LoanAgreement = {
   net_proceeds: string;
   fee_handling: FeeHandling;
   penalty_rate_percent: string;
+  penalty_basis: PenaltyBasis;
+  penalty_calculation: PenaltyCalculation;
+  payment_allocation: PaymentAllocation;
   grace_period_days: number;
   first_due_date: string;
   maturity_date: string;
   schedule: ScheduleItem[];
   terms_text: string;
   generated_at: string | null;
-  signed_at: string | null;
-  signed_method: "portal" | "paper" | null;
-  has_paper_copy: boolean;
-  signature_required: boolean;
 };
 
 export type ReleaseMethod = "cash" | "check" | "bank_transfer" | "savings_credit";
@@ -241,6 +230,7 @@ export type LoanRelease = {
 };
 
 export type LoanAccount = {
+  id: number;
   loan_no: string | null;
   status: string;
   principal: string;
@@ -264,5 +254,86 @@ export type ReleasePayload = {
 /** The agreement's figures for a first due date, before anything is saved. */
 export type AgreementPreview = Omit<
   LoanAgreement,
-  "agreement_no" | "generated_at" | "signed_at" | "signed_method" | "has_paper_copy" | "signature_required"
+  "agreement_no" | "generated_at"
 >;
+
+export type PaymentMethod = "cash" | "check" | "bank_transfer" | "savings_deduction";
+export type LoanStatus = "active" | "fully_paid";
+export type ScheduleStatus = "paid" | "partial" | "overdue" | "due" | "upcoming";
+
+export type LoanScheduleRow = {
+  number: number;
+  due_date: string;
+  principal: string;
+  interest: string;
+  total: string;
+  paid_principal: string;
+  paid_interest: string;
+  penalty_charged: string;
+  penalty_paid: string;
+  penalty_owed: string;
+  status: ScheduleStatus;
+};
+
+export type LoanPaymentRecord = {
+  id: number;
+  receipt_no: string | null;
+  paid_on: string;
+  amount: string;
+  method: PaymentMethod;
+  reference_no: string | null;
+  status: "posted" | "voided";
+  balance_after: string;
+  penalty_after: string;
+  applied_to: { penalty: string; interest: string; principal: string };
+  // Staff only
+  remarks?: string | null;
+  received_by_name?: string;
+  voided_at?: string | null;
+  voided_by_name?: string | null;
+  void_reason?: string | null;
+};
+
+export type LoanSummary = {
+  as_of: string;
+  due_now: string;
+  penalty_owed: string;
+  payoff: string;
+  outstanding: string;
+  overdue_count: number;
+  next_due: { number: number; due_date: string; amount: string } | null;
+};
+
+export type LoanDetail = {
+  id: number;
+  loan_no: string | null;
+  status: LoanStatus;
+  principal: string;
+  total_interest: string;
+  outstanding_balance: string;
+  installments_count: number;
+  first_due_date: string;
+  maturity_date: string;
+  released_at: string | null;
+  fully_paid_at: string | null;
+  penalty_rate_percent: string;
+  grace_period_days: number;
+  penalty_basis: PenaltyBasis;
+  penalty_calculation: PenaltyCalculation;
+  payment_allocation: PaymentAllocation;
+  member?: { id: number; member_code: string; name: string };
+  product?: { id: number; code: string; name: string };
+  summary: LoanSummary;
+  can_record?: boolean;
+  can_void?: boolean;
+  schedule?: LoanScheduleRow[];
+  payments?: LoanPaymentRecord[];
+};
+
+export type RecordPaymentPayload = {
+  amount: string;
+  paid_on: string;
+  method: PaymentMethod;
+  reference_no: string | null;
+  remarks: string | null;
+};

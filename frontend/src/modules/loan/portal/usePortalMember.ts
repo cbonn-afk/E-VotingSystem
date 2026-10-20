@@ -14,3 +14,10 @@ export const usePortalMember = () =>
   });
 
 export const portalErrorStatus = (error: unknown): number | null => (error instanceof ApiError ? error.status : null);
+
+export const PORTAL_LOGIN_PATH = "/loan-portal";
+export const PORTAL_CHANGE_PASSWORD_PATH = "/loan-portal/change-password";
+export const PORTAL_DASHBOARD_PATH = "/loan-portal/dashboard";
+
+/** The server answers 428 while the member still has the default password. */
+export const portalPasswordChangeRequired = (error: unknown): boolean => portalErrorStatus(error) === 428;

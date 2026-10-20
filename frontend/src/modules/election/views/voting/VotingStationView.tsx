@@ -89,14 +89,14 @@ export default function VotingStationView() {
   const review = () => {
     if (!ballot || !voter) return;
 
-    if (
-      voter.sections.amendments &&
-      ballot.amendments.some((amendment) => !choices[amendment.id])
-    ) {
-      setNotice({ severity: "error", message: "Please vote for every proposed amendment." });
+    // if (
+    //   voter.sections.amendments &&
+    //   ballot.amendments.some((amendment) => !choices[amendment.id])
+    // ) {
+    //   setNotice({ severity: "error", message: "Please vote for every proposed amendment." });
 
-      return;
-    }
+    //   return;
+    // }
 
     setConfirmOpen(true);
   };
@@ -196,7 +196,7 @@ export default function VotingStationView() {
         submitting={mutations.cast.isPending}
         positions={voter?.sections.election ? (ballot?.positions ?? null) : null}
         selection={selection}
-        amendments={voter?.sections.amendments ? (ballot?.amendments ?? null) : null}
+        // amendments={voter?.sections.amendments ? (ballot?.amendments ?? null) : null}
         choices={choices}
         onBack={() => setConfirmOpen(false)}
         onConfirm={() => void submit()}

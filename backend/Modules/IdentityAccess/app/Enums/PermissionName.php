@@ -12,7 +12,6 @@ enum PermissionName: string
     case SettingsRolesView = 'settings.roles.view';
     case SettingsRolesManage = 'settings.roles.manage';
     case SettingsAuditView = 'settings.audit.view';
-    case SettingsDocumentsManage = 'settings.documents.manage';
 
     case MembersView = 'members.view';
     case MembersManage = 'members.manage';
@@ -39,7 +38,9 @@ enum PermissionName: string
     case LoanEvaluate = 'loan.evaluate';
     case LoanApprove = 'loan.approve';
     case LoanRelease = 'loan.release';
+    case LoanPaymentsView = 'loan.payments.view';
     case LoanPaymentsRecord = 'loan.payments.record';
+    case LoanPaymentsVoid = 'loan.payments.void';
     case LoanReportsView = 'loan.reports.view';
 
     case InquiryAccess = 'inquiry.access';

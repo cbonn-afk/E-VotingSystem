@@ -13,6 +13,7 @@ final class LoanResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'loan_no' => $this->loan_no,
             'status' => $this->status,
             'principal' => (string) $this->principal,

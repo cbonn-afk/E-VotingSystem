@@ -22,18 +22,6 @@ export const portalApplicationsApi = {
 
   cancel: (id: number) => apiClient<void>(`${base}/applications/${id}`, { method: "DELETE", headers }),
 
-  uploadDocument: (id: number, requirement: string, file: File) => {
-    const body = new FormData();
-
-    body.append("requirement", requirement);
-    body.append("file", file);
-
-    return apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/documents`, { method: "POST", body, headers });
-  },
-
-  deleteDocument: (id: number, documentId: number) =>
-    apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/documents/${documentId}`, { method: "DELETE", headers }),
-
   setGuarantors: (id: number, member_codes: string[]) =>
     apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/guarantors`, {
       method: "PUT",
@@ -45,13 +33,6 @@ export const portalApplicationsApi = {
     apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/signature`, {
       method: "POST",
       body: { signature },
-      headers,
-    }),
-
-  signAgreement: (id: number, signature: string | null) =>
-    apiClient<{ data: LoanApplication }>(`${base}/applications/${id}/agreement/sign`, {
-      method: "POST",
-      body: { agreed: true, signature },
       headers,
     }),
 

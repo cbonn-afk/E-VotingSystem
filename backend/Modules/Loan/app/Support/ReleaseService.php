@@ -24,12 +24,13 @@ final class ReleaseService
         $loan = DB::transaction(function () use ($application, $cashier, $data): Loan {
             $locked = LoanApplication::query()->with(['agreement', 'member'])->lockForUpdate()->findOrFail($application->id);
             $agreement = $locked->agreement;
+            $previousStatus = $locked->status;
 
-            if ($locked->status !== ApplicationStatus::FOR_RELEASE || $agreement === null || ! $agreement->isSigned()) {
-                throw ValidationException::withMessages(['status' => ['The loan can be released only after the agreement is signed.']]);
+            if (! in_array($locked->status, [ApplicationStatus::FOR_AGREEMENT, ApplicationStatus::FOR_RELEASE], true) || $agreement === null) {
+                throw ValidationException::withMessages(['status' => ['Create the loan agreement first, then release the loan.']]);
             }
 
-            if ($agreement->first_due_date->format('Y-m-d') <= date('Y-m-d')) {
+            if ($agreement->first_due_date->format('Y-m-d') <= now()->format('Y-m-d')) {
                 throw ValidationException::withMessages(['status' => ['The first due date has already passed. Regenerate the agreement with a new date before releasing.']]);
             }
 
@@ -49,6 +50,11 @@ final class ReleaseService
                 'installments_count' => $agreement->installments_count,
                 'first_due_date' => $agreement->first_due_date,
                 'maturity_date' => $agreement->maturity_date,
+                'penalty_rate_percent' => $agreement->penalty_rate_percent,
+                'grace_period_days' => $agreement->grace_period_days,
+                'penalty_basis' => $agreement->penalty_basis,
+                'penalty_calculation' => $agreement->penalty_calculation,
+                'payment_allocation' => $agreement->payment_allocation,
                 'status' => 'active',
                 'released_at' => now(),
             ]);
@@ -83,7 +89,7 @@ final class ReleaseService
 
             $this->workflow->record(
                 $locked,
-                ApplicationStatus::FOR_RELEASE,
+                $previousStatus,
                 ApplicationStatus::RELEASED,
                 'staff',
                 $cashier->name,

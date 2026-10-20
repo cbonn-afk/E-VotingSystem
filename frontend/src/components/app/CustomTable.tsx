@@ -295,7 +295,6 @@ function CustomTable<T extends GridValidRowModel>({
 
     (onSortModelChange as NonNullable<DataGridProps<T>["onSortModelChange"]>)(
       model,
-      details,
     );
   };
 

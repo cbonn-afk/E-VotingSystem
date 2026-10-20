@@ -26,6 +26,9 @@ describe("loan settings schema", () => {
     fee_handling: "deduct_from_proceeds" as const,
     payment_allocation: "penalty_interest_principal" as const,
     penalty_basis: "installment" as const,
+    penalty_rate_source: "coop_default" as const,
+    default_penalty_rate_percent: "2",
+    penalty_calculation: "per_month_or_fraction" as const,
     agreement_terms: "1. The Borrower promises to repay.",
   };
 
@@ -41,6 +44,14 @@ describe("loan settings schema", () => {
   it("rejects an unknown money rule and empty agreement terms", () => {
     expect(loanSettingsSchema.safeParse({ ...valid, fee_handling: "whatever" }).success).toBe(false);
     expect(loanSettingsSchema.safeParse({ ...valid, agreement_terms: "  " }).success).toBe(false);
+  });
+
+  it("checks the penalty rate", () => {
+    expect(loanSettingsSchema.safeParse({ ...valid, default_penalty_rate_percent: "0" }).success).toBe(true);
+    expect(loanSettingsSchema.safeParse({ ...valid, default_penalty_rate_percent: "1.5" }).success).toBe(true);
+    expect(loanSettingsSchema.safeParse({ ...valid, default_penalty_rate_percent: "150" }).success).toBe(false);
+    expect(loanSettingsSchema.safeParse({ ...valid, default_penalty_rate_percent: "two" }).success).toBe(false);
+    expect(loanSettingsSchema.safeParse({ ...valid, penalty_calculation: "weekly" }).success).toBe(false);
   });
 
   it("rejects a bad network entry", () => {

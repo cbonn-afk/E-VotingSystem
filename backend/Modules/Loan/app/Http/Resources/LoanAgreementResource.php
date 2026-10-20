@@ -6,7 +6,6 @@ namespace Modules\Loan\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Modules\Loan\Models\LoanSetting;
 
 /** @mixin \Modules\Loan\Models\LoanAgreement */
 final class LoanAgreementResource extends JsonResource
@@ -29,17 +28,15 @@ final class LoanAgreementResource extends JsonResource
             'net_proceeds' => (string) $this->net_proceeds,
             'fee_handling' => $this->fee_handling,
             'penalty_rate_percent' => (string) $this->penalty_rate_percent,
+            'penalty_basis' => $this->penalty_basis,
+            'penalty_calculation' => $this->penalty_calculation,
+            'payment_allocation' => $this->payment_allocation,
             'grace_period_days' => $this->grace_period_days,
             'first_due_date' => $this->first_due_date->format('Y-m-d'),
             'maturity_date' => $this->maturity_date->format('Y-m-d'),
             'schedule' => $this->schedule,
             'terms_text' => $this->terms_text,
             'generated_at' => $this->generated_at?->toISOString(),
-            'signed_at' => $this->signed_at?->toISOString(),
-            'signed_method' => $this->signed_method,
-            'has_paper_copy' => $this->paper_path !== null,
-            // So the member's screen knows whether a drawn signature is needed to accept.
-            'signature_required' => LoanSetting::current()->signature_required,
         ];
     }
 }

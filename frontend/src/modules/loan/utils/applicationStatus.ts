@@ -5,13 +5,13 @@ type Color = "default" | "primary" | "secondary" | "success" | "warning" | "erro
 export const applicationStatusLabel: Record<ApplicationStatus, string> = {
   draft: "Draft",
   submitted: "Submitted",
-  document_review: "Document review",
+  document_review: "Under review",
   returned: "Returned for correction",
   for_evaluation: "For evaluation",
   for_approval: "For approval",
   approved: "Approved",
-  for_agreement: "For agreement",
-  for_release: "For release",
+  for_agreement: "Ready for release",
+  for_release: "Ready for release",
   released: "Released",
   rejected: "Rejected",
   cancelled: "Cancelled",
@@ -64,6 +64,27 @@ export const formatDate = (value: string | null): string => {
 
 export const frequencyLabel = { weekly: "Weekly", semi_monthly: "Twice a month", monthly: "Monthly" } as const;
 export const interestMethodLabel = { diminishing: "Diminishing balance", flat: "Flat rate" } as const;
+export const paymentMethodLabel = {
+  cash: "Cash",
+  check: "Check",
+  bank_transfer: "Bank transfer",
+  savings_deduction: "Deducted from savings",
+} as const;
+
+export const scheduleStatusLabel = { paid: "Paid", partial: "Partly paid", overdue: "Overdue", due: "Due today", upcoming: "Upcoming" } as const;
+export const scheduleStatusColor = { paid: "success", partial: "info", overdue: "error", due: "warning", upcoming: "default" } as const;
+
+/** The penalty rule in plain words, e.g. for the agreement and the loan screen. */
+export const describePenalty = (rate: string, basis: string, calculation: string, graceDays: number): string => {
+  if (Number(rate) <= 0) return "No late penalty";
+
+  const on = basis === "principal_balance" ? "the overdue principal" : "the overdue installment";
+  const how = calculation === "daily_prorated" ? "charged by the day (1/30 of the monthly rate for each day late)" : "for each month or part of a month late";
+  const grace = graceDays > 0 ? `, starting after a ${graceDays}-day grace period` : "";
+
+  return `${Number(rate)}% a month on ${on}, ${how}${grace}`;
+};
+
 export const releaseMethodLabel = {
   cash: "Cash",
   check: "Check",

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Alert from "@mui/material/Alert";
 import Card from "@mui/material/Card";
+import Chip from "@mui/material/Chip";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import Box from "@mui/material/Box";
@@ -17,9 +18,10 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import ApplicationStatusChip from "../components/ApplicationStatusChip";
-import { formatPeso } from "../utils/applicationStatus";
+import { formatDate, formatPeso } from "../utils/applicationStatus";
 import { portalApi, portalMemberKey } from "./portalApi";
 import { usePortalApplicationList } from "./usePortalApplications";
+import { usePortalLoans } from "./usePortalLoans";
 import { portalErrorStatus, usePortalMember } from "./usePortalMember";
 
 export default function PortalDashboardView() {
@@ -28,6 +30,7 @@ export default function PortalDashboardView() {
   const query = usePortalMember();
   const member = query.data?.data;
   const applications = usePortalApplicationList();
+  const loans = usePortalLoans();
   const status = portalErrorStatus(query.error);
 
   // Session missing or expired: back to the sign-in page.
@@ -84,6 +87,35 @@ export default function PortalDashboardView() {
             </Typography>
           </Stack>
         </Paper>
+
+        {(loans.data?.data.length ?? 0) > 0 && (
+          <Stack spacing={2}>
+            <Typography variant="h6">My loans</Typography>
+            {loans.data?.data.map((loan) => (
+              <Card key={loan.id} variant="outlined">
+                <CardActionArea onClick={() => router.push(`/loan-portal/loans/${loan.id}`)}>
+                  <CardContent>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+                      <Stack spacing={0.25}>
+                        <Typography variant="subtitle1">{loan.product?.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {loan.loan_no} · balance {formatPeso(loan.summary.outstanding)}
+                          {loan.summary.next_due ? ` · next ${formatPeso(loan.summary.next_due.amount)} on ${formatDate(loan.summary.next_due.due_date)}` : ""}
+                        </Typography>
+                      </Stack>
+                      <Chip
+                        size="small"
+                        variant="tonal"
+                        color={loan.status === "fully_paid" ? "success" : loan.summary.overdue_count > 0 ? "error" : "info"}
+                        label={loan.status === "fully_paid" ? "Fully paid" : loan.summary.overdue_count > 0 ? "Overdue" : "Active"}
+                      />
+                    </Stack>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            ))}
+          </Stack>
+        )}
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">My loan applications</Typography>

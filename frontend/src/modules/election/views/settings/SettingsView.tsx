@@ -125,7 +125,7 @@ export default function SettingsView() {
   return (
     <Stack spacing={5}>
       <ElectionPageHeader
-        title="Election Settings"
+        title="Sulong Settings"
         description="Titles used on printed reports, and how the registration desk and voting station behave."
       />
 

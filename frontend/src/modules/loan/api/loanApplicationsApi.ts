@@ -10,7 +10,7 @@ import type {
   ReleasePayload,
 } from "../types";
 
-export type ApplicationAction = "start_review" | "return" | "accept_documents" | "reject";
+export type ApplicationAction = "accept" | "return" | "reject";
 
 export const loanApplicationsApi = {
   list: (params: { q?: string; status?: ApplicationStatus | ""; page?: number; per_page?: number }) => {
@@ -44,20 +44,7 @@ export const loanApplicationsApi = {
   generateAgreement: (id: number, first_due_date: string) =>
     apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/agreement`, { method: "POST", body: { first_due_date } }),
 
-  recordPaperAgreement: (id: number, file: File) => {
-    const body = new FormData();
-
-    body.append("file", file);
-
-    return apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/agreement/paper`, { method: "POST", body });
-  },
-
   release: (id: number, body: ReleasePayload) =>
     apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/release`, { method: "POST", body }),
 
-  reviewDocument: (id: number, documentId: number, status: "accepted" | "rejected", remarks?: string) =>
-    apiClient<{ data: LoanApplication }>(`/api/loan/applications/${id}/documents/${documentId}`, {
-      method: "PATCH",
-      body: { status, remarks: remarks ?? null },
-    }),
 };

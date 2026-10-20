@@ -20,6 +20,10 @@ export const membersApi = {
   update: (id: number, body: MemberPayload) =>
     apiClient<{ data: Member }>(`/api/members/${id}`, { method: 'PATCH', body }),
 
+  /** Sets the member's portal password back to the default; they must change it at next sign-in. */
+  resetPassword: (id: number) =>
+    apiClient<{ message: string }>(`/api/members/${id}/reset-password`, { method: 'POST' }),
+
   remove: (id: number) => apiClient<void>(`/api/members/${id}`, { method: 'DELETE' }),
 
   /** commit=false only checks the file; commit=true saves it. */

@@ -22,7 +22,12 @@ import ApplicationDetailsForm from "../components/ApplicationDetailsForm";
 import type { LoanProduct } from "../types";
 import { formatPeso } from "../utils/applicationStatus";
 import { usePortalApplicationActions, usePortalProducts } from "./usePortalApplications";
-import { portalErrorStatus, usePortalMember } from "./usePortalMember";
+import {
+  PORTAL_CHANGE_PASSWORD_PATH,
+  portalErrorStatus,
+  portalPasswordChangeRequired,
+  usePortalMember,
+} from "./usePortalMember";
 
 const frequency = { weekly: "weekly", semi_monthly: "twice a month", monthly: "monthly" } as const;
 
@@ -35,6 +40,12 @@ export default function PortalApplyView() {
 
   if (portalErrorStatus(member.error) === 401) {
     router.replace("/loan-portal");
+
+    return null;
+  }
+
+  if (member.data?.data.require_password_change || portalPasswordChangeRequired(products.error)) {
+    router.replace(PORTAL_CHANGE_PASSWORD_PATH);
 
     return null;
   }

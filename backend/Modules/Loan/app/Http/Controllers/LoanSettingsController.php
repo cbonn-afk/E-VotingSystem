@@ -36,6 +36,9 @@ class LoanSettingsController extends Controller
             'payment_allocation' => ['required', Rule::in(LoanSetting::PAYMENT_ALLOCATIONS)],
             'penalty_basis' => ['required', Rule::in(LoanSetting::PENALTY_BASES)],
             'agreement_terms' => ['nullable', 'string', 'max:8000'],
+            'penalty_rate_source' => ['required', Rule::in(LoanSetting::PENALTY_RATE_SOURCES)],
+            'default_penalty_rate_percent' => ['required', 'numeric', 'min:0', 'max:100'],
+            'penalty_calculation' => ['required', Rule::in(LoanSetting::PENALTY_CALCULATIONS)],
         ]);
 
         $data['allowed_networks'] = array_values(array_unique(array_map('trim', $data['allowed_networks'])));
@@ -63,6 +66,9 @@ class LoanSettingsController extends Controller
             'fee_handling' => $s->fee_handling,
             'payment_allocation' => $s->payment_allocation,
             'penalty_basis' => $s->penalty_basis,
+            'penalty_rate_source' => $s->penalty_rate_source,
+            'default_penalty_rate_percent' => (string) $s->default_penalty_rate_percent,
+            'penalty_calculation' => $s->penalty_calculation,
             // The text in force: the saved one, or the built-in default when none was saved.
             'agreement_terms' => $s->termsText(),
         ];

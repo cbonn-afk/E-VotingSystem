@@ -17,6 +17,8 @@ class LoanSetting extends Model
     public const FEE_HANDLING = ['deduct_from_proceeds', 'collect_separately'];
     public const PAYMENT_ALLOCATIONS = ['penalty_interest_principal', 'interest_penalty_principal'];
     public const PENALTY_BASES = ['installment', 'principal_balance'];
+    public const PENALTY_RATE_SOURCES = ['coop_default', 'product'];
+    public const PENALTY_CALCULATIONS = ['per_month_or_fraction', 'daily_prorated'];
 
     /** Starting text only. The cooperative's own counsel should review and replace it under Loan > Settings. */
     public const DEFAULT_TERMS = <<<'TEXT'
@@ -33,6 +35,7 @@ TEXT;
     protected $fillable = [
         'portal_access_mode', 'allowed_networks', 'session_idle_minutes', 'signature_required',
         'diminishing_method', 'fee_handling', 'payment_allocation', 'penalty_basis', 'agreement_terms',
+        'penalty_rate_source', 'default_penalty_rate_percent', 'penalty_calculation',
     ];
 
     protected function casts(): array
@@ -41,6 +44,7 @@ TEXT;
             'allowed_networks' => 'array',
             'session_idle_minutes' => 'integer',
             'signature_required' => 'boolean',
+            'default_penalty_rate_percent' => 'decimal:3',
         ];
     }
 

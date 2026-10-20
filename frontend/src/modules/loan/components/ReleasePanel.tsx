@@ -19,7 +19,7 @@ import { useLoanApplicationActions } from "../hooks/useLoanApplications";
 import type { LoanApplication, ReleaseMethod } from "../types";
 import { formatPeso, releaseMethodLabel } from "../utils/applicationStatus";
 
-/** The cashier pays the signed loan out. This creates the loan account and its schedule. */
+/** The cashier pays the loan out. This creates the loan account and its schedule. */
 export default function ReleasePanel({ application }: { application: LoanApplication }) {
   const actions = useLoanApplicationActions(application.id);
   const agreement = application.agreement;
@@ -69,7 +69,7 @@ export default function ReleasePanel({ application }: { application: LoanApplica
         <Typography variant="h6">Release the loan</Typography>
         <Alert severity="info">
           Pay the member <strong>{formatPeso(agreement.net_proceeds)}</strong>
-          {agreement.fee_handling === "deduct_from_proceeds" && fees > 0 ? ` (loan ${formatPeso(agreement.principal)} less fees ${formatPeso(fees)})` : ""}. The agreement is signed.
+          {agreement.fee_handling === "deduct_from_proceeds" && fees > 0 ? ` (loan ${formatPeso(agreement.principal)} less fees ${formatPeso(fees)})` : ""}. The agreement is ready.
         </Alert>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>

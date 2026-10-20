@@ -119,13 +119,13 @@ export default function ResultsView() {
           iconString="bx bx-poll"
           iconColor="success"
         />
-        <CustomKPICard
+        {/* <CustomKPICard
           label="Voted (Amendments)"
           value={String(results?.turnout.amendment_voters ?? 0)}
           loading={query.isLoading}
           iconString="bx bx-file"
           iconColor="info"
-        />
+        /> */}
         <CustomKPICard
           label="Turnout"
           value={`${turnoutPercent}%`}
@@ -178,7 +178,7 @@ export default function ResultsView() {
         </Paper>
       ))}
 
-      <Typography variant="h5">Amendment Votes</Typography>
+      {/* <Typography variant="h5">Amendment Votes</Typography>
       {results && results.amendments.length === 0 && (
         <Alert severity="info">There are no amendment proposals.</Alert>
       )}
@@ -208,7 +208,7 @@ export default function ResultsView() {
             <VoteBar label="Did not vote" votes={amendment.abstained} total={registered} color="secondary" />
           </Stack>
         </Paper>
-      ))}
+      ))} */}
     </Stack>
   );
 }

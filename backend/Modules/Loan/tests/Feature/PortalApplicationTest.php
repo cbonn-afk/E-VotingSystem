@@ -45,8 +45,11 @@ final class PortalApplicationTest extends TestCase
 
     private function signIn(string $code = 'M-0001'): void
     {
-        $res = $this->postJson('/api/loan-portal/auth/login', ['member_code' => $code])->assertOk();
-        $this->withUnencryptedCookie('loan_portal_session', $res->getCookie('loan_portal_session', false)->getValue());
+        // These tests are about applications, so the member has already replaced the default password.
+        Member::where('member_code', $code)->first()->forceFill(['require_password_change' => false])->save();
+
+        $res = $this->postJson('/api/loan-portal/auth/login', ['member_code' => $code, 'password' => Member::DEFAULT_PASSWORD])->assertOk();
+        $this->withCredentials()->withUnencryptedCookie('loan_portal_session', $res->getCookie('loan_portal_session', false)->getValue());
     }
 
     /** @return array<string,mixed> */

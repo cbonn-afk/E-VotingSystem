@@ -39,6 +39,12 @@ final class LoanRoleSeeder extends Seeder
         // Loan Officers approve small loans, so an existing Loan Officer role gains the approve permission (additive only).
         Role::findByName('Loan Officer', 'web')->givePermissionTo(Permission::findOrCreate('loan.approve', 'web'));
 
+        // Cashiers collect payments, so an existing Cashier role gains the payment permissions (additive only).
+        Role::findByName('Cashier', 'web')->givePermissionTo([
+            Permission::findOrCreate('loan.payments.view', 'web'),
+            Permission::findOrCreate('loan.payments.record', 'web'),
+        ]);
+
         // Point the default approval levels at the matching roles, only where no role was chosen yet.
         foreach (['Loan Officer' => 'Loan Officer', 'Credit Committee' => 'Credit Committee', 'Management / Board' => 'Loan Board'] as $level => $role) {
             LoanApprovalLevel::query()->where('name', $level)->whereNull('role_id')

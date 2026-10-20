@@ -3,7 +3,7 @@ import type { SuperAdminModule } from "../types";
 
 export const superAdminModules: SuperAdminModule[] = [
   {
-    title: "Election System",
+    title: "Sulong",
     description: "Manage elections, candidates, voters, and results.",
     icon: "bx-poll",
     color: "primary",
@@ -11,7 +11,7 @@ export const superAdminModules: SuperAdminModule[] = [
     module: "election",
   },
   {
-    title: "Loan System",
+    title: "Unlad",
     description: "Manage borrowers, loan applications, payments, and balances.",
     icon: "bx-wallet",
     color: "warning",

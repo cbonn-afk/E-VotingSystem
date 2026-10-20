@@ -28,7 +28,7 @@ import ReleasePanel from "../components/ReleasePanel";
 import FilePreviewDialog, { type PreviewTarget } from "../components/FilePreviewDialog";
 import RemarksDialog from "../components/RemarksDialog";
 import { useLoanApplication, useLoanApplicationActions } from "../hooks/useLoanApplications";
-import type { ApplicationDocument } from "../types";
+// import type { ApplicationDocument } from "../types";
 import { formatDateTime, formatPeso } from "../utils/applicationStatus";
 import { downloadFile, formatFileSize } from "../utils/downloadFile";
 
@@ -54,7 +54,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
   const actions = useLoanApplicationActions(applicationId);
 
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
-  const [dialog, setDialog] = useState<{ kind: "return" | "reject" } | { kind: "document"; document: ApplicationDocument } | null>(null);
+  // const [dialog, setDialog] = useState<{ kind: "return" | "reject" } | { kind: "document"; document: ApplicationDocument } | null>(null);
 
   const application = query.data?.data;
 
@@ -62,29 +62,29 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
   if (!application) return <Alert severity="error">The application could not be loaded.</Alert>;
 
   const inReview = application.status === "document_review";
-  const documents = application.documents ?? [];
-  const requirements = application.product?.documents ?? [];
+  // const documents = application.documents ?? [];
+  // const requirements = application.product?.documents ?? [];
 
   const run = (action: ApplicationAction, remarks?: string) =>
     actions.transition.mutate(
       { action, remarks },
       {
         onSuccess: () => {
-          setDialog(null);
+          // setDialog(null);
           toast.success("Application updated.");
         },
         onError: (error) => toast.error(errorText(error)),
       },
     );
 
-  const review = (document: ApplicationDocument, status: "accepted" | "rejected", remarks?: string) =>
-    actions.reviewDocument.mutate(
-      { documentId: document.id, status, remarks },
-      {
-        onSuccess: () => setDialog(null),
-        onError: (error) => toast.error(errorText(error)),
-      },
-    );
+  // const review = (document: ApplicationDocument, status: "accepted" | "rejected", remarks?: string) =>
+  //   actions.reviewDocument.mutate(
+  //     { documentId: document.id, status, remarks },
+  //     {
+  //       onSuccess: () => setDialog(null),
+  //       onError: (error) => toast.error(errorText(error)),
+  //     },
+  //   );
 
   return (
     <Stack spacing={4}>
@@ -105,7 +105,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
 
       {application.status_remarks && <Alert severity="info">Last note: {application.status_remarks}</Alert>}
 
-      {canManage && (
+      {/* {canManage && (
         <Paper className="p-5">
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             {application.status === "submitted" && (
@@ -135,7 +135,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
             )}
           </Stack>
         </Paper>
-      )}
+      )} */}
 
       {application.can_evaluate && (
         <EvaluationForm
@@ -159,7 +159,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
 
       <AgreementPanel application={application} />
       <ReleasePanel application={application} />
-      {application.loan && <LoanAccountPanel loan={application.loan} receiptHref={`/loan/applications/${application.id}/receipt`} />}
+      {application.loan && <LoanAccountPanel loan={application.loan} receiptHref={`/loan/applications/${application.id}/receipt`} accountHref={`/loan/loans/${application.loan.id}`} />}
 
       <Paper className="p-6">
         <Stack spacing={1}>
@@ -208,7 +208,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
         </Stack>
       </Paper>
 
-      <Paper className="p-6">
+      {/* <Paper className="p-6">
         <Stack spacing={3}>
           <Typography variant="h6">Documents</Typography>
           {!inReview && canManage && documents.length > 0 && (
@@ -271,7 +271,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
             );
           })}
         </Stack>
-      </Paper>
+      </Paper> */}
 
       {(application.guarantors?.length ?? 0) > 0 && (
         <Paper className="p-6">
@@ -294,7 +294,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
       </Paper>
 
       <FilePreviewDialog target={preview} onClose={() => setPreview(null)} />
-      <RemarksDialog
+      {/* <RemarksDialog
         open={dialog?.kind === "return"}
         title="Return for correction"
         label="What should the member fix?"
@@ -320,7 +320,7 @@ export default function LoanApplicationDetailView({ applicationId }: { applicati
         pending={actions.reviewDocument.isPending}
         onClose={() => setDialog(null)}
         onConfirm={(remarks) => dialog?.kind === "document" && review(dialog.document, "rejected", remarks)}
-      />
+      /> */}
     </Stack>
   );
 }

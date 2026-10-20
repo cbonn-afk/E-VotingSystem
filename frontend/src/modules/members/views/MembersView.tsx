@@ -46,6 +46,12 @@ export default function MembersView() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] })
   })
 
+  const resetPassword = useMutation({
+    mutationFn: (id: number) => membersApi.resetPassword(id),
+    onSuccess: response => window.alert(response.message),
+    onError: () => window.alert('The password could not be reset. Try again.')
+  })
+
   const openForm = (m: Member | null) => {
     setEditing(m)
     setFormOpen(true)
@@ -105,6 +111,17 @@ export default function MembersView() {
                 <TableCell align='right'>
                   <Button size='small' onClick={() => openForm(m)}>
                     Edit
+                  </Button>
+                  <Button
+                    size='small'
+                    color='warning'
+                    disabled={resetPassword.isPending}
+                    onClick={() => {
+                      if (window.confirm(`Reset the portal password of ${m.name} to the default (Password123)?`))
+                        resetPassword.mutate(m.id)
+                    }}
+                  >
+                    Reset password
                   </Button>
                   <Button
                     size='small'

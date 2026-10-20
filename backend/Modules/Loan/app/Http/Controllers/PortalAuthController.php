@@ -8,9 +8,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Modules\IdentityAccess\Enums\AuditAction;
 use Modules\IdentityAccess\Support\AuditLogger;
@@ -19,17 +21,21 @@ use Modules\Loan\Models\PortalSession;
 use Modules\Members\Models\Member;
 
 /**
- * Member portal sign-in with the member code only (no password, no SMS code).
- * Because the code is the only secret, wrong guesses are rate limited per code+IP and per IP.
+ * Member portal sign-in with member code + password. New members start with the default password
+ * (Member::DEFAULT_PASSWORD) and must change it before using the portal.
+ * Wrong guesses are rate limited per code+IP and per IP.
  */
 class PortalAuthController extends Controller
 {
-    /** Same answer for an unknown code and an inactive member, so codes cannot be probed. */
-    private const FAILED = 'We could not sign you in with that member code. Check it and try again.';
+    /** Same answer for an unknown code, an inactive member and a wrong password, so codes cannot be probed. */
+    private const FAILED = 'We could not sign you in with that member code and password. Check them and try again.';
 
     public function login(Request $request): JsonResponse
     {
-        $data = $request->validate(['member_code' => ['required', 'string', 'max:50']]);
+        $data = $request->validate([
+            'member_code' => ['required', 'string', 'max:50'],
+            'password' => ['required', 'string', 'max:255'],
+        ]);
         $code = trim($data['member_code']);
         $ip = (string) $request->ip();
 
@@ -41,7 +47,10 @@ class PortalAuthController extends Controller
 
         $member = Member::query()->where('member_code', $code)->where('status', 'active')->first();
 
-        if ($member === null) {
+        // Always run a hash check so an unknown code takes as long as a wrong password.
+        $passwordOk = Hash::check($data['password'], $member?->password ?? Hash::make(Str::random(16))) && $member !== null;
+
+        if (! $passwordOk) {
             $lockSeconds = (int) config('loan.portal.login_lockout_minutes', 15) * 60;
 
             RateLimiter::hit($codeKey, $lockSeconds);
@@ -74,6 +83,33 @@ class PortalAuthController extends Controller
         $cookie = cookie(EnsurePortalSession::COOKIE, $token, $hours * 60, '/', null, app()->isProduction(), true, false, 'lax');
 
         return response()->json(['data' => $this->summary($member)])->withCookie($cookie);
+    }
+
+    /** Replaces the default password. Other sessions of this member are signed out. */
+    public function changePassword(Request $request): JsonResponse
+    {
+        /** @var Member $member */
+        $member = $request->attributes->get('portal_member');
+
+        $data = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', 'different:current_password', Password::min(8)],
+        ]);
+
+        if (! Hash::check($data['current_password'], (string) $member->password)) {
+            throw ValidationException::withMessages(['current_password' => ['The current password is incorrect.']]);
+        }
+
+        $member->forceFill(['password' => $data['password'], 'require_password_change' => false])->save();
+
+        PortalSession::query()
+            ->where('member_id', $member->id)
+            ->where('id', '!=', $request->attributes->get('portal_session')->id)
+            ->delete();
+
+        AuditLogger::record(null, AuditAction::LoanPortalPasswordChanged, $member, null, ['ip' => (string) $request->ip()]);
+
+        return response()->json(['data' => $this->summary($member)]);
     }
 
     public function me(Request $request): JsonResponse
@@ -112,6 +148,7 @@ class PortalAuthController extends Controller
             'name' => $member->name,
             'mobile_masked' => $mobile === '' ? null : substr($mobile, 0, 3).str_repeat('*', max(strlen($mobile) - 7, 0)).substr($mobile, -4),
             'is_delinquent' => $member->is_delinquent,
+            'require_password_change' => $member->require_password_change,
         ];
     }
 }

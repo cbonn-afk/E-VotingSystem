@@ -16,6 +16,12 @@ export const loanNavigation: ModuleNavigationGroup[] = [
         permission: "loan.applications.view",
       },
       {
+        label: "Loans & Payments",
+        href: "/loan/loans",
+        icon: "bx-money",
+        permission: "loan.payments.view",
+      },
+      {
         label: "Loan Products",
         href: "/loan/products",
         icon: "bx-purchase-tag-alt",
@@ -23,17 +29,17 @@ export const loanNavigation: ModuleNavigationGroup[] = [
       },
     ],
   },
-  {
-    label: "Members",
-    items: [
-      {
-        label: "Members",
-        href: "/members",
-        icon: "bx-id-card",
-        permission: "members.view",
-      },
-    ],
-  },
+  // {
+  //   label: "Members",
+  //   items: [
+  //     {
+  //       label: "Members",
+  //       href: "/members",
+  //       icon: "bx-id-card",
+  //       permission: "members.view",
+  //     },
+  //   ],
+  // },
   {
     label: "Setup",
     items: [

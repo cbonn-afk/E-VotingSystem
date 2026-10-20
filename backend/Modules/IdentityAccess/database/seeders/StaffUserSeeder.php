@@ -25,17 +25,17 @@ final class StaffUserSeeder extends Seeder
         $password = (string) env('SEED_STAFF_PASSWORD', 'Password123!');
 
         $staff = [
-            ['Ana Reyes', 'admin@ifmpc.test', SystemRole::Administrator->value],
-            ['Liza Manalo', 'loan.officer@ifmpc.test', 'Loan Officer'],
-            ['Mark Villareal', 'loan.evaluator@ifmpc.test', 'Loan Evaluator'],
-            ['Grace Dumlao', 'credit.committee@ifmpc.test', 'Credit Committee'],
-            ['Ben Sarmiento', 'loan.board@ifmpc.test', 'Loan Board'],
-            ['Cora Padilla', 'cashier@ifmpc.test', 'Cashier'],
-            ['Nelia Abalos', 'inquiry.officer@ifmpc.test', 'Inquiry Officer'],
-            ['Inquiry Station 1', 'inquiry.station@ifmpc.test', 'Inquiry Station'],
-            ['Paolo Ventura', 'election.officer@ifmpc.test', 'Election Officer'],
-            ['Jenny Racelis', 'election.registrar@ifmpc.test', 'Election Registrar'],
-            ['Voting Booth 1', 'election.teller@ifmpc.test', 'Election Teller'],
+            ['Ana Reyes', 'admin@btc.test', SystemRole::Administrator->value],
+            ['Liza Manalo', 'loan.officer@btc.test', 'Loan Officer'],
+            ['Mark Villareal', 'loan.evaluator@btc.test', 'Loan Evaluator'],
+            ['Grace Dumlao', 'credit.committee@btc.test', 'Credit Committee'],
+            ['Ben Sarmiento', 'loan.board@btc.test', 'Loan Board'],
+            ['Cora Padilla', 'cashier@btc.test', 'Cashier'],
+            ['Nelia Abalos', 'inquiry.officer@btc.test', 'Inquiry Officer'],
+            ['Inquiry Station 1', 'inquiry.station@btc.test', 'Inquiry Station'],
+            ['Paolo Ventura', 'election.officer@btc.test', 'Election Officer'],
+            ['Jenny Racelis', 'election.registrar@btc.test', 'Election Registrar'],
+            ['Voting Booth 1', 'election.teller@btc.test', 'Election Teller'],
         ];
 
         foreach ($staff as [$name, $email, $role]) {

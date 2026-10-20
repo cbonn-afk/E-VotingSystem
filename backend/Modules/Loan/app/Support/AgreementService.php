@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Loan\Support;
 
 use DateTimeImmutable;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +16,7 @@ use Modules\Loan\Models\LoanAgreement;
 use Modules\Loan\Models\LoanApplication;
 use Modules\Loan\Models\LoanSetting;
 
-/** Builds the loan agreement from the approved terms and records the member's acceptance. */
+/** Builds the loan agreement from the approved terms. Staff create it; the member is not asked to accept it. */
 final class AgreementService
 {
     public function __construct(private readonly ApplicationWorkflow $workflow) {}
@@ -29,7 +28,7 @@ final class AgreementService
      */
     public function terms(LoanApplication $application, DateTimeImmutable $firstDue): array
     {
-        if ($firstDue->format('Y-m-d') <= date('Y-m-d')) {
+        if ($firstDue->format('Y-m-d') <= now()->format('Y-m-d')) {
             throw ValidationException::withMessages(['first_due_date' => ['The first due date must be in the future.']]);
         }
 
@@ -50,6 +49,11 @@ final class AgreementService
         } catch (InvalidArgumentException $e) {
             throw ValidationException::withMessages(['first_due_date' => [$e->getMessage()]]);
         }
+
+        // The penalty rate printed on the agreement is the one that will be charged: the cooperative's rate, or the product's.
+        $penaltyRate = $settings->penalty_rate_source === 'product'
+            ? (string) ($terms['penalty_rate_percent'] ?? '0')
+            : (string) $settings->default_penalty_rate_percent;
 
         $processing = $this->fee($principal, (string) ($terms['processing_fee_percent'] ?? '0'));
         $service = $this->fee($principal, (string) ($terms['service_fee_percent'] ?? '0'));
@@ -75,7 +79,10 @@ final class AgreementService
             'service_fee' => number_format($service / 100, 2, '.', ''),
             'net_proceeds' => number_format($net / 100, 2, '.', ''),
             'fee_handling' => $settings->fee_handling,
-            'penalty_rate_percent' => (string) ($terms['penalty_rate_percent'] ?? '0'),
+            'penalty_rate_percent' => $penaltyRate,
+            'penalty_basis' => $settings->penalty_basis,
+            'penalty_calculation' => $settings->penalty_calculation,
+            'payment_allocation' => $settings->payment_allocation,
             'grace_period_days' => (int) ($terms['grace_period_days'] ?? 0),
             'first_due_date' => $firstDue->format('Y-m-d'),
             'maturity_date' => $schedule['maturity_date'],
@@ -84,7 +91,7 @@ final class AgreementService
         ];
     }
 
-    /** Creates the agreement (or replaces an unreleased one, which voids any signature). */
+    /** Creates the agreement (or replaces an unreleased one). The loan is then ready for release: the member does not sign it online. */
     public function generate(LoanApplication $application, User $staff, DateTimeImmutable $firstDue): LoanAgreement
     {
         $replaced = false;
@@ -113,15 +120,15 @@ final class AgreementService
             $agreement->update(['agreement_no' => sprintf('AG-%s-%06d', now()->format('Y'), $agreement->id)]);
 
             $from = $locked->status;
-            $locked->forceFill(['status' => ApplicationStatus::FOR_AGREEMENT])->save();
+            $locked->forceFill(['status' => ApplicationStatus::FOR_RELEASE])->save();
 
             $this->workflow->record(
                 $locked,
                 $from,
-                ApplicationStatus::FOR_AGREEMENT,
+                ApplicationStatus::FOR_RELEASE,
                 'staff',
                 $staff->name,
-                ($replaced ? 'Agreement regenerated' : 'Agreement generated')." for {$terms['principal']}. First payment due {$terms['first_due_date']}.",
+                ($replaced ? 'Agreement regenerated' : 'Agreement created')." for {$terms['principal']}. First payment due {$terms['first_due_date']}. Ready for release.",
             );
 
             return $agreement;
@@ -135,57 +142,6 @@ final class AgreementService
         ]);
 
         return $agreement;
-    }
-
-    /** The member accepts the agreement in the portal, with a drawn signature when Loan settings require one. */
-    public function signByMember(LoanApplication $application, ?string $signatureDataUrl): void
-    {
-        DB::transaction(function () use ($application, $signatureDataUrl): void {
-            $locked = LoanApplication::query()->with(['agreement', 'member'])->lockForUpdate()->findOrFail($application->id);
-
-            if ($locked->status !== ApplicationStatus::FOR_AGREEMENT || $locked->agreement === null) {
-                throw ValidationException::withMessages(['status' => ['There is no agreement waiting for your signature.']]);
-            }
-
-            if (LoanSetting::current()->signature_required && blank($signatureDataUrl)) {
-                throw ValidationException::withMessages(['signature' => ['Sign the agreement.']]);
-            }
-
-            $path = null;
-
-            if (filled($signatureDataUrl)) {
-                $path = "loan/applications/{$locked->id}/agreement-signature.png";
-                Storage::disk('local')->put($path, SignatureImage::decode((string) $signatureDataUrl));
-            }
-
-            $locked->agreement->update(['signed_at' => now(), 'signed_method' => 'portal', 'signature_path' => $path]);
-            $locked->forceFill(['status' => ApplicationStatus::FOR_RELEASE])->save();
-
-            $this->workflow->record($locked, ApplicationStatus::FOR_AGREEMENT, ApplicationStatus::FOR_RELEASE, 'member', $locked->member->name, 'The member accepted the agreement.');
-        });
-
-        AuditLogger::record(null, AuditAction::LoanAgreementSigned, $application, null, ['method' => 'portal']);
-    }
-
-    /** Staff attach the scanned, hand-signed agreement for a member who did not sign online. */
-    public function recordPaper(LoanApplication $application, User $staff, UploadedFile $file): void
-    {
-        DB::transaction(function () use ($application, $staff, $file): void {
-            $locked = LoanApplication::query()->with('agreement')->lockForUpdate()->findOrFail($application->id);
-
-            if ($locked->status !== ApplicationStatus::FOR_AGREEMENT || $locked->agreement === null) {
-                throw ValidationException::withMessages(['status' => ['There is no agreement waiting for a signature.']]);
-            }
-
-            $path = $file->store("loan/applications/{$locked->id}", 'local');
-
-            $locked->agreement->update(['signed_at' => now(), 'signed_method' => 'paper', 'paper_path' => $path, 'recorded_by' => $staff->id]);
-            $locked->forceFill(['status' => ApplicationStatus::FOR_RELEASE])->save();
-
-            $this->workflow->record($locked, ApplicationStatus::FOR_AGREEMENT, ApplicationStatus::FOR_RELEASE, 'staff', $staff->name, 'Signed paper agreement recorded.');
-        });
-
-        AuditLogger::record($staff, AuditAction::LoanAgreementSigned, $application, null, ['method' => 'paper']);
     }
 
     private function fee(string $principal, string $percent): int

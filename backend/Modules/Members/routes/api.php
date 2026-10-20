@@ -14,5 +14,6 @@ Route::middleware(['auth:sanctum', 'password.changed'])
         Route::get('/', [MemberController::class, 'index'])->middleware('can:members.view');
         Route::post('/', [MemberController::class, 'store'])->middleware('can:members.manage');
         Route::patch('{member}', [MemberController::class, 'update'])->middleware('can:members.manage');
+        Route::post('{member}/reset-password', [MemberController::class, 'resetPassword'])->middleware('can:members.manage');
         Route::delete('{member}', [MemberController::class, 'destroy'])->middleware('can:members.manage');
     });

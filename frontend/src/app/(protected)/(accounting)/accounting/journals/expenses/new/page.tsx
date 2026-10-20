@@ -1,5 +1,0 @@
-import { redirect } from "next/navigation";
-
-export default function Page() {
-  redirect("/accounting/expenses/new");
-}

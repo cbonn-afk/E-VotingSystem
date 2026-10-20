@@ -37,6 +37,9 @@ const defaults: LoanSettingsFormValues = {
   fee_handling: "deduct_from_proceeds",
   payment_allocation: "penalty_interest_principal",
   penalty_basis: "installment",
+  penalty_rate_source: "coop_default",
+  default_penalty_rate_percent: "2",
+  penalty_calculation: "per_month_or_fraction",
   agreement_terms: "",
 };
 
@@ -86,7 +89,7 @@ export default function LoanSettingsView() {
 
       <Paper className="p-6" component="form" noValidate onSubmit={save}>
         <Stack spacing={5}>
-          <Controller
+          {/* <Controller
             name="portal_access_mode"
             control={control}
             render={({ field }) => (
@@ -106,23 +109,23 @@ export default function LoanSettingsView() {
                 </RadioGroup>
               </Stack>
             )}
-          />
+          /> */}
 
-          {mode === "online" && (
+          {/* {mode === "online" && (
             <Alert severity="warning">
               Members sign in with their member code only. Online, anyone on the internet who knows or guesses a code
               can see that member&apos;s information. Keep &quot;Cooperative network only&quot; unless members must
               use the portal away from the office.
             </Alert>
-          )}
+          )} */}
 
-          {mode === "network_only" && networkCount === 0 && (
+          {/* {mode === "network_only" && networkCount === 0 && (
             <Alert severity="warning">
               No address is listed, so nobody can reach the portal. Add the cooperative&apos;s IP address or range.
             </Alert>
-          )}
+          )} */}
 
-          <Controller
+          {/* <Controller
             name="networksText"
             control={control}
             render={({ field }) => (
@@ -138,7 +141,7 @@ export default function LoanSettingsView() {
                 helperText={errors.networksText?.message ?? "One IP address or range per line, e.g. 192.168.1.0/24."}
               />
             )}
-          />
+          /> */}
 
           <Controller
             name="session_idle_minutes"
@@ -177,8 +180,10 @@ export default function LoanSettingsView() {
             [
               ["diminishing_method", "Diminishing-balance payments", [["equal_installment", "Equal installment every period"], ["fixed_principal", "Fixed principal, interest shrinks each period"]], undefined],
               ["fee_handling", "Processing and service fees", [["deduct_from_proceeds", "Deducted from the money released"], ["collect_separately", "Collected from the member separately"]], undefined],
-              ["payment_allocation", "When a payment is received, apply it to", [["penalty_interest_principal", "Penalty, then interest, then principal"], ["interest_penalty_principal", "Interest, then penalty, then principal"]], "Used when payments are recorded (next release)."],
-              ["penalty_basis", "A late penalty is a percent of", [["installment", "The overdue installment"], ["principal_balance", "The remaining principal"]], "Used when penalties are calculated (next release)."],
+              ["payment_allocation", "When a payment is received, apply it to", [["penalty_interest_principal", "Penalty, then interest, then principal"], ["interest_penalty_principal", "Interest, then penalty, then principal"]], "Applied to the oldest installment first."],
+              ["penalty_rate_source", "Late penalty rate comes from", [["coop_default", "One rate for the whole cooperative (set below)"], ["product", "Each loan product's own penalty rate"]], "The rate is printed on each agreement and stays the same for that loan."],
+              ["penalty_calculation", "A late penalty is charged", [["per_month_or_fraction", "For each month or part of a month late"], ["daily_prorated", "By the day (1/30 of the monthly rate)"]], "Months are calendar months: due 15 Jan, paid 15 Feb is one month; paid 16 Feb is two."],
+              ["penalty_basis", "A late penalty is a percent of", [["installment", "The overdue installment (principal and interest)"], ["principal_balance", "The overdue principal only"]], undefined],
             ] as const
           ).map(([name, label, options, helper]) => (
             <Controller
@@ -196,6 +201,21 @@ export default function LoanSettingsView() {
               )}
             />
           ))}
+          {watch("penalty_rate_source") === "coop_default" && (
+            <Controller
+              name="default_penalty_rate_percent"
+              control={control}
+              render={({ field }) => (
+                <CustomTextField
+                  {...field}
+                  fullWidth
+                  label="Cooperative late penalty (% per month)"
+                  error={Boolean(errors.default_penalty_rate_percent)}
+                  helperText={errors.default_penalty_rate_percent?.message ?? "The common rule is 2% a month. Use 0 for no penalty."}
+                />
+              )}
+            />
+          )}
           <Typography variant="caption" color="text.secondary" sx={{ mt: -3 }}>
             Flat-rate products always charge interest on the original amount for the whole term, split evenly.
           </Typography>

@@ -7,10 +7,10 @@ import type { LoanAccount } from "../types";
 import { formatDate, formatDateTime, formatPeso, releaseMethodLabel } from "../utils/applicationStatus";
 import ScheduleTable from "./ScheduleTable";
 
-type Props = { loan: LoanAccount; receiptHref?: string };
+type Props = { loan: LoanAccount; receiptHref?: string; accountHref?: string };
 
 /** The released loan: balance, who paid it out and how, and the repayment schedule. */
-export default function LoanAccountPanel({ loan, receiptHref }: Props) {
+export default function LoanAccountPanel({ loan, receiptHref, accountHref }: Props) {
   const release = loan.release;
 
   return (
@@ -23,6 +23,11 @@ export default function LoanAccountPanel({ loan, receiptHref }: Props) {
               Released {formatDateTime(loan.released_at)}
             </Typography>
           </Stack>
+          {accountHref && (
+            <Button variant="contained" href={accountHref}>
+              Open loan account and payments
+            </Button>
+          )}
           {receiptHref && release && (
             <Button variant="outlined" href={receiptHref} target="_blank" rel="noopener">
               View or print receipt

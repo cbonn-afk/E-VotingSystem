@@ -22,9 +22,7 @@ import { ApiError } from "@/libs/api/apiError";
 import ApplicationDetailsForm from "../components/ApplicationDetailsForm";
 import ApplicationStatusChip from "../components/ApplicationStatusChip";
 import LoanAccountPanel from "../components/LoanAccountPanel";
-import MemberAgreementPanel from "../components/MemberAgreementPanel";
 import ApplicationTimeline from "../components/ApplicationTimeline";
-import MemberApplicationDocuments from "../components/MemberApplicationDocuments";
 import SignaturePad from "../components/SignaturePad";
 import { parseCodes, toDetailsForm } from "../schemas/applicationSchema";
 import { formatPeso } from "../utils/applicationStatus";
@@ -111,23 +109,21 @@ export default function PortalApplicationView({ applicationId }: { applicationId
         {application.status === "rejected" && application.status_remarks && (
           <Alert severity="error">Your application was not approved: {application.status_remarks}</Alert>
         )}
-        {application.status === "submitted" && <Alert severity="info">Submitted. The cooperative will review your documents next.</Alert>}
-        {application.status === "document_review" && <Alert severity="info">The cooperative is checking your documents.</Alert>}
-        {application.status === "for_evaluation" && <Alert severity="success">Your documents were accepted. The application is waiting for evaluation.</Alert>}
+        {application.status === "submitted" && <Alert severity="info">Submitted. The cooperative will review your application next.</Alert>}
+        {application.status === "document_review" && <Alert severity="info">The cooperative is reviewing your application.</Alert>}
+        {application.status === "for_evaluation" && <Alert severity="success">Your application passed the first review and is waiting for evaluation.</Alert>}
         {application.status === "for_approval" && <Alert severity="info">Your application was evaluated and is now with the approvers.</Alert>}
-        {application.status === "for_agreement" && <Alert severity="warning">Your loan is approved. Please read and accept the loan agreement below.</Alert>}
-        {application.status === "for_release" && <Alert severity="info">Thank you. The cooperative will release your loan soon.</Alert>}
+                {(application.status === "for_release" || application.status === "for_agreement") && (
+          <Alert severity="info">Your loan is ready for release. The cooperative will contact you to hand it over.</Alert>
+        )}
         {application.status === "released" && <Alert severity="success">Your loan was released. Your repayment schedule is below.</Alert>}
         {application.status === "approved" && (
           <Alert severity="success">
             Your loan was approved
-            {application.approved_amount ? ` for ${formatPeso(application.approved_amount)}` : ""}. The cooperative will contact you about the next steps.
+            {application.approved_amount ? ` for ${formatPeso(application.approved_amount)}` : ""}. The cooperative is preparing it for release.
           </Alert>
         )}
 
-        {application.agreement && ["for_agreement", "for_release", "released"].includes(application.status) && (
-          <MemberAgreementPanel application={application} />
-        )}
         {application.loan && <LoanAccountPanel loan={application.loan} />}
 
         <Paper className="p-6">
@@ -160,25 +156,6 @@ export default function PortalApplicationView({ applicationId }: { applicationId
                 )}
               </Stack>
             )}
-          </Stack>
-        </Paper>
-
-        <Paper className="p-6">
-          <Stack spacing={3}>
-            <Typography variant="h6">Documents</Typography>
-            <MemberApplicationDocuments
-              application={application}
-              uploading={actions.upload.isPending}
-              onUpload={(requirement, file) =>
-                actions.upload.mutate(
-                  { requirement, file },
-                  { onError: (e) => toast.error(e instanceof ApiError ? (e.errors.file?.[0] ?? e.message) : "The file could not be uploaded.") },
-                )
-              }
-              onRemove={(documentId) =>
-                actions.removeDocument.mutate(documentId, { onError: (e) => toast.error(messageOf(e, "The file could not be removed.")) })
-              }
-            />
           </Stack>
         </Paper>
 
@@ -250,7 +227,7 @@ export default function PortalApplicationView({ applicationId }: { applicationId
                 </Alert>
               )}
               <FormControlLabel
-                label="I confirm that the information and documents I gave are true and correct."
+                label="I confirm that the information I gave is true and correct."
                 control={<Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />}
               />
               <Stack direction="row" spacing={2}>

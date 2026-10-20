@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use Modules\IdentityAccess\Enums\AuditAction;
+use Modules\IdentityAccess\Support\AuditLogger;
+use Modules\Loan\Models\PortalSession;
 use Modules\Members\Exports\MemberTemplateExport;
 use Modules\Members\Http\Resources\MemberResource;
 use Modules\Members\Models\Member;
@@ -48,6 +51,19 @@ class MemberController extends Controller
         $member->update($this->validated($request, $member));
 
         return new MemberResource($member->refresh());
+    }
+
+    /** Sets the member's password back to the default; they must change it at next sign-in. */
+    public function resetPassword(Request $request, Member $member): JsonResponse
+    {
+        $member->resetPassword();
+
+        // Close any portal session that was opened with the old password.
+        PortalSession::query()->where('member_id', $member->id)->delete();
+
+        AuditLogger::record($request->user(), AuditAction::MemberPasswordReset, $member);
+
+        return response()->json(['message' => 'Password reset to the default. The member must change it at next sign-in.']);
     }
 
     public function destroy(Member $member): JsonResponse

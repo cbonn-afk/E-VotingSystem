@@ -43,6 +43,8 @@ enum AuditAction: string
     case LoanPortalOtpRequested = 'loan.portal.otp.requested';
     case LoanPortalLoginSucceeded = 'loan.portal.login.succeeded';
     case LoanPortalLoginFailed = 'loan.portal.login.failed';
+    case LoanPortalPasswordChanged = 'loan.portal.password.changed';
+    case MemberPasswordReset = 'member.password.reset';
     case LoanApplicationCreated = 'loan.application.created';
     case LoanApplicationSubmitted = 'loan.application.submitted';
     case LoanApplicationStatusUpdated = 'loan.application.status.updated';
@@ -54,6 +56,8 @@ enum AuditAction: string
     case LoanAgreementGenerated = 'loan.agreement.generated';
     case LoanAgreementSigned = 'loan.agreement.signed';
     case LoanReleased = 'loan.released';
+    case LoanPaymentRecorded = 'loan.payment.recorded';
+    case LoanPaymentVoided = 'loan.payment.voided';
 
     case DocumentSettingsUpdated = 'documents.settings.updated';
 

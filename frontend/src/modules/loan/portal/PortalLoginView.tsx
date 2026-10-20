@@ -8,6 +8,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -16,10 +18,15 @@ import CustomTextField from "@core/components/mui/TextField";
 import { ApiError } from "@/libs/api/apiError";
 
 import { portalApi, portalMemberKey } from "./portalApi";
-import { portalErrorStatus, usePortalMember } from "./usePortalMember";
+import {
+  PORTAL_CHANGE_PASSWORD_PATH,
+  PORTAL_DASHBOARD_PATH,
+  portalErrorStatus,
+  usePortalMember,
+} from "./usePortalMember";
 
 const messageFrom = (error: unknown): string => {
-  if (error instanceof ApiError) return error.errors.member_code?.[0] ?? error.message;
+  if (error instanceof ApiError) return error.errors.member_code?.[0] ?? error.errors.password?.[0] ?? error.message;
 
   return "You could not be signed in. Try again.";
 };
@@ -30,18 +37,22 @@ export default function PortalLoginView() {
   const existing = usePortalMember();
 
   const [memberCode, setMemberCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Already signed in: go straight to the dashboard.
+  // Already signed in: go to the dashboard, or to the change-password page while the default password is still set.
   useEffect(() => {
-    if (existing.data) router.replace("/loan-portal/dashboard");
+    if (existing.data) {
+      router.replace(existing.data.data.require_password_change ? PORTAL_CHANGE_PASSWORD_PATH : PORTAL_DASHBOARD_PATH);
+    }
   }, [existing.data, router]);
 
   const login = useMutation({
-    mutationFn: () => portalApi.login(memberCode.trim()),
+    mutationFn: () => portalApi.login(memberCode.trim(), password),
     onSuccess: (response) => {
       queryClient.setQueryData(portalMemberKey, response);
-      router.replace("/loan-portal/dashboard");
+      router.replace(response.data.require_password_change ? PORTAL_CHANGE_PASSWORD_PATH : PORTAL_DASHBOARD_PATH);
     },
     onError: (e) => setError(messageFrom(e)),
   });
@@ -49,7 +60,7 @@ export default function PortalLoginView() {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setError(null);
-    if (memberCode.trim()) login.mutate();
+    if (memberCode.trim() && password) login.mutate();
   };
 
   const blocked = portalErrorStatus(existing.error) === 403;
@@ -63,7 +74,7 @@ export default function PortalLoginView() {
               Member portal
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Enter your member code to continue. Keep it private: anyone who has it can see your information.
+              Sign in with your member code and password. If this is your first time, use the default password given to you by the cooperative.
             </Typography>
           </Stack>
 
@@ -78,7 +89,35 @@ export default function PortalLoginView() {
               value={memberCode}
               onChange={(event) => setMemberCode(event.target.value)}
             />
-            <Button type="submit" variant="contained" disabled={!memberCode.trim() || login.isPending || blocked}>
+            <CustomTextField
+              fullWidth
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        edge="end"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={() => setShowPassword((shown) => !shown)}
+                        onMouseDown={(event) => event.preventDefault()}
+                      >
+                        <i className={showPassword ? "bx-hide" : "bx-show"} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!memberCode.trim() || !password || login.isPending || blocked}
+            >
               Sign in
             </Button>
           </form>
